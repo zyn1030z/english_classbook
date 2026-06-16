@@ -22,18 +22,12 @@ export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] })
   const [flipped, setFlipped] = React.useState(false);
   const [schedule, setSchedule] = React.useState<string>("Choose a review rating to schedule the next review.");
 
-  if (!initialCards || initialCards.length === 0) {
-    return (
-      <div className="flex min-h-[320px] flex-col items-center justify-center text-center">
-        <p className="text-muted-foreground">You are all caught up!</p>
-        <p className="mt-2 text-sm text-muted-foreground">No flashcards are due for review right now.</p>
-      </div>
-    );
-  }
-
-  const card = initialCards[index % initialCards.length];
+  const hasCards = initialCards && initialCards.length > 0;
+  const card = hasCards ? initialCards[index % initialCards.length] : null;
 
   React.useEffect(() => {
+    if (!hasCards) return;
+
     function onKeyDown(event: KeyboardEvent) {
       const rating = ratings.find((item) => item.key === event.key);
       if (rating) {
@@ -47,7 +41,16 @@ export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] })
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  });
+  }, [hasCards, index, flipped, initialCards]); // Added missing dependencies
+
+  if (!hasCards || !card) {
+    return (
+      <div className="flex min-h-[320px] flex-col items-center justify-center text-center">
+        <p className="text-muted-foreground">You are all caught up!</p>
+        <p className="mt-2 text-sm text-muted-foreground">No flashcards are due for review right now.</p>
+      </div>
+    );
+  }
 
   async function review(quality: 1 | 3 | 4 | 5) {
     const next = calculateNextReview(card.easeFactor, card.interval, card.repetitions, quality);
