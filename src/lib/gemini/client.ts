@@ -90,3 +90,74 @@ ${text}
     throw error;
   }
 }
+
+// Define the expected output schema for quiz generation
+const quizGenerationSchema: Schema = {
+  type: Type.OBJECT,
+  properties: {
+    questions: {
+      type: Type.ARRAY,
+      description: "List of exactly 10 multiple choice questions",
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          questionType: { type: Type.STRING, description: "Type of question: 'vocabulary' or 'grammar'" },
+          content: { type: Type.STRING, description: "The question text (e.g., Fill in the blank or Choose the correct grammar)" },
+          options: {
+            type: Type.ARRAY,
+            description: "Exactly 4 possible string answers",
+            items: { type: Type.STRING }
+          },
+          correctAnswer: { type: Type.STRING, description: "The exact string of the correct option from the options array" },
+          explanation: { type: Type.STRING, description: "Brief explanation in Vietnamese of why this answer is correct" }
+        },
+        required: ["questionType", "content", "options", "correctAnswer", "explanation"]
+      }
+    }
+  },
+  required: ["questions"]
+};
+
+/**
+ * Sends vocabulary and grammar data to Gemini AI to generate a 10-question multiple-choice quiz.
+ */
+export async function generateQuizContentGemini(vocabularies: any[], grammarTopics: any[]) {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY is missing");
+  }
+
+  const prompt = `
+Bạn là một giáo viên tiếng Anh chuyên nghiệp chuyên ra đề thi. Dưới đây là danh sách từ vựng và chủ đề ngữ pháp mà học sinh vừa học:
+
+Từ vựng:
+${JSON.stringify(vocabularies, null, 2)}
+
+Ngữ pháp:
+${JSON.stringify(grammarTopics, null, 2)}
+
+Nhiệm vụ của bạn: Hãy tạo ra một bài kiểm tra trắc nghiệm (Multiple choice quiz) gồm đúng 10 câu hỏi để kiểm tra kiến thức của học sinh dựa trên danh sách trên.
+- 5 câu hỏi về Từ vựng (điền từ vào chỗ trống, chọn từ đồng nghĩa, v.v.)
+- 5 câu hỏi về Ngữ pháp (chọn dạng đúng của động từ, sửa lỗi sai, v.v.)
+Mỗi câu hỏi phải có ĐÚNG 4 lựa chọn (options) và 1 đáp án đúng (correctAnswer). Phải có giải thích bằng tiếng Việt (explanation).
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: quizGenerationSchema,
+        temperature: 0.3,
+      }
+    });
+
+    if (response.text) {
+      return JSON.parse(response.text);
+    }
+    return null;
+  } catch (error) {
+    console.error("Gemini AI Quiz Generation Error:", error);
+    throw error;
+  }
+}

@@ -41,17 +41,17 @@ export function VocabularyTable({
   }
 
   return (
-    <Card>
+    <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md transition-colors">
       <CardHeader>
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <CardTitle>Vocabulary bank</CardTitle>
           <div className="grid gap-3 sm:grid-cols-[1fr_160px] md:w-[520px]">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={query} onChange={(event) => setQuery(event.target.value)} className="pl-9" placeholder="Search word, meaning, category" />
+              <Input value={query} onChange={(event) => setQuery(event.target.value)} className="pl-9 dark:border-white/10 dark:bg-black/20 focus-visible:ring-primary/50" placeholder="Search word, meaning, category" />
             </div>
             <Select value={difficulty} onValueChange={setDifficulty}>
-              <SelectTrigger aria-label="Difficulty filter">
+              <SelectTrigger aria-label="Difficulty filter" className="dark:border-white/10 dark:bg-black/20 focus:ring-primary/50">
                 <SelectValue placeholder="Difficulty" />
               </SelectTrigger>
               <SelectContent>

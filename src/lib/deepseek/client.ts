@@ -100,3 +100,83 @@ ${text}
     throw error;
   }
 }
+
+const quizJsonSchema = {
+  name: "quiz_generation",
+  schema: {
+    type: "object",
+    properties: {
+      questions: {
+        type: "array",
+        description: "List of exactly 10 multiple choice questions",
+        items: {
+          type: "object",
+          properties: {
+            questionType: { type: "string", description: "Type of question: 'vocabulary' or 'grammar'" },
+            content: { type: "string", description: "The question text (e.g., Fill in the blank or Choose the correct grammar)" },
+            options: {
+              type: "array",
+              description: "Exactly 4 possible string answers",
+              items: { type: "string" }
+            },
+            correctAnswer: { type: "string", description: "The exact string of the correct option from the options array" },
+            explanation: { type: "string", description: "Brief explanation in Vietnamese of why this answer is correct" }
+          },
+          required: ["questionType", "content", "options", "correctAnswer", "explanation"],
+          additionalProperties: false
+        }
+      }
+    },
+    required: ["questions"],
+    additionalProperties: false
+  },
+  strict: true
+};
+
+/**
+ * Sends vocabulary and grammar data to DeepSeek AI to generate a 10-question multiple-choice quiz.
+ */
+export async function generateQuizContentDeepseek(vocabularies: any[], grammarTopics: any[]) {
+  if (!process.env.DEEPSEEK_API_KEY) {
+    throw new Error("DEEPSEEK_API_KEY is missing");
+  }
+
+  const prompt = `
+Bạn là một giáo viên tiếng Anh chuyên nghiệp chuyên ra đề thi. Dưới đây là danh sách từ vựng và chủ đề ngữ pháp mà học sinh vừa học:
+
+Từ vựng:
+${JSON.stringify(vocabularies, null, 2)}
+
+Ngữ pháp:
+${JSON.stringify(grammarTopics, null, 2)}
+
+Nhiệm vụ của bạn: Hãy tạo ra một bài kiểm tra trắc nghiệm (Multiple choice quiz) gồm đúng 10 câu hỏi để kiểm tra kiến thức của học sinh dựa trên danh sách trên.
+- 5 câu hỏi về Từ vựng (điền từ vào chỗ trống, chọn từ đồng nghĩa, v.v.)
+- 5 câu hỏi về Ngữ pháp (chọn dạng đúng của động từ, sửa lỗi sai, v.v.)
+Mỗi câu hỏi phải có ĐÚNG 4 lựa chọn (options) và 1 đáp án đúng (correctAnswer). Phải có giải thích bằng tiếng Việt (explanation).
+
+BẠN BẮT BUỘC PHẢI TRẢ VỀ MỘT ĐỐI TƯỢNG JSON TUÂN THỦ ĐÚNG SCHEMA SAU ĐÂY:
+${JSON.stringify(quizJsonSchema.schema, null, 2)}
+  `;
+
+  try {
+    const response = await deepseek.chat.completions.create({
+      model: "deepseek-chat",
+      messages: [
+        { role: "system", content: "You are a helpful assistant designed to output structured JSON exactly matching the requested schema." },
+        { role: "user", content: prompt }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.3,
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (content) {
+      return JSON.parse(content);
+    }
+    return null;
+  } catch (error) {
+    console.error("DeepSeek AI Quiz Generation Error:", error);
+    throw error;
+  }
+}

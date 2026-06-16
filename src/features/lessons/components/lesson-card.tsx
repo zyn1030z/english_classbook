@@ -22,13 +22,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { deleteLesson } from "@/features/lessons/actions";
+import { deleteLesson, generateLessonQuiz } from "@/features/lessons/actions";
 import type { Lesson } from "@/types";
 import { EditLessonSheet } from "./edit-lesson-sheet";
+import { useRouter } from "next/navigation";
 
 export function LessonCard({ lesson }: { lesson: Lesson }) {
   const [isDeleting, startDelete] = useTransition();
+  const [isGenerating, startGenerate] = useTransition();
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const router = useRouter();
 
   const handleDelete = () => {
     startDelete(async () => {
@@ -37,9 +40,20 @@ export function LessonCard({ lesson }: { lesson: Lesson }) {
     });
   };
 
+  const handleGenerateQuiz = () => {
+    startGenerate(async () => {
+      const res = await generateLessonQuiz(lesson.id);
+      if (res.ok) {
+        router.push(`/lessons/${lesson.id}/quiz`);
+      } else {
+        alert("Sinh bài kiểm tra thất bại: " + res.message);
+      }
+    });
+  };
+
   return (
     <>
-      <Card className="group relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary/20 dark:hover:border-primary/30">
+      <Card className="group relative overflow-hidden transition-all duration-300 shadow-md dark:border-white/10 dark:bg-[#161616] hover:-translate-y-1 hover:shadow-xl hover:border-primary/30 dark:hover:border-primary/40">
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-3">
@@ -63,7 +77,19 @@ export function LessonCard({ lesson }: { lesson: Lesson }) {
                     <span className="sr-only">Open menu</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40 rounded-xl shadow-lg">
+                <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg">
+                  <DropdownMenuItem 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleGenerateQuiz();
+                    }}
+                    className="gap-2 cursor-pointer text-primary focus:text-primary focus:bg-primary/5 font-medium"
+                    disabled={isGenerating}
+                  >
+                    {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <span className="text-lg">🪄</span>} 
+                    {isGenerating ? "AI is generating..." : "Generate & Play Quiz"}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <EditLessonSheet lesson={lesson} />
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 

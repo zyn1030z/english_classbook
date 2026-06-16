@@ -36,7 +36,7 @@ export function StatsCards() {
         return (
           <Card 
             key={metric.label} 
-            className="group relative overflow-hidden border-border/50 bg-card hover:bg-card/90 hover:-translate-y-0.5 hover:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.3)] transition-all duration-300"
+            className="group relative overflow-hidden shadow-md dark:border-white/10 dark:bg-[#161616] hover:bg-card/90 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300"
           >
             {/* Soft background glow on hover */}
             <div className={cn(
