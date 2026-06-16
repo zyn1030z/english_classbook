@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { VocabularyCards } from "@/features/vocabulary/components/vocabulary-cards";
 import { VocabularyTable } from "@/features/vocabulary/components/vocabulary-table";
 import { createClient } from "@/lib/supabase/client";
 import { hasSupabaseConfig } from "@/lib/supabase/config";
@@ -27,7 +26,8 @@ export default function VocabularyPage() {
           .from("vocabularies")
           .select(`
             *,
-            example_sentences (*)
+            example_sentences (*),
+            lessons (title)
           `)
           .eq("user_id", user.id)
           .then(({ data, error }) => {
@@ -36,6 +36,7 @@ export default function VocabularyPage() {
                 id: v.id,
                 userId: v.user_id,
                 lessonId: v.lesson_id,
+                lesson: v.lessons ? { title: v.lessons.title } : undefined,
                 word: v.word,
                 meaning: v.meaning,
                 ipa: v.ipa || "",
@@ -100,7 +101,6 @@ export default function VocabularyPage() {
         <p className="text-sm text-muted-foreground">Vocabulary</p>
         <h1 className="mt-1 text-3xl font-semibold">Search, review, and pronounce words</h1>
       </section>
-      <VocabularyCards vocabularies={vocabularies.slice(0, 4)} />
       <VocabularyTable
         vocabularies={vocabularies}
         onToggleFavorite={handleToggleFavorite}

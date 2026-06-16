@@ -43,7 +43,11 @@ export function Sidebar() {
   const { isCollapsed, isOpenMobile, toggleSidebar, setOpenMobile } = useSidebar();
 
   const sidebarContent = (
-    <div className="flex h-full flex-col bg-card border-r border-border/60 transition-all duration-300">
+    <div className={cn(
+      "flex h-full flex-col bg-card border-r border-border/60 transition-all duration-300",
+      "fixed left-0 top-0 h-screen z-30",
+      isCollapsed ? "w-16" : "w-64"
+    )}>
       {/* Header */}
       <div className={cn(
         "flex h-16 items-center border-b border-border/60 px-4",
@@ -139,7 +143,7 @@ export function Sidebar() {
     <>
       {/* Desktop Sidebar */}
       <aside className={cn(
-        "hidden md:block shrink-0 min-h-screen sticky top-0 z-30 transition-all duration-300 ease-in-out",
+        "hidden md:block shrink-0 transition-all duration-300 ease-in-out",
         isCollapsed ? "w-16" : "w-64"
       )}>
         {sidebarContent}

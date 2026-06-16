@@ -29,6 +29,7 @@ export interface Vocabulary {
   id: string;
   userId: string;
   lessonId?: string;
+  lesson?: { title: string };
   word: string;
   meaning: string;
   ipa: string;

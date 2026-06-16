@@ -37,6 +37,8 @@ export async function createLesson(formData: FormData) {
     return;
   }
 
+  const vocabLimit = Number(formData.get("vocabLimit")) || 10;
+
   // Khởi tạo bài học trong DB
   const { data: lesson, error: lessonError } = await supabase
     .from("lessons")
@@ -114,15 +116,15 @@ export async function createLesson(formData: FormData) {
         
         if (rawText && rawText.length > 50) {
           const aiProvider = process.env.AI_PROVIDER || "gemini";
-          console.log(`Starting AI extraction with provider: ${aiProvider}`);
+          console.log(`Starting AI extraction with provider: ${aiProvider}, limit: ${vocabLimit}`);
           let aiData = null;
           
           if (aiProvider === "gemini" && process.env.GEMINI_API_KEY) {
             const { extractLessonContent } = await import("@/lib/gemini/client");
-            aiData = await extractLessonContent(rawText);
+            aiData = await extractLessonContent(rawText, vocabLimit);
           } else if (aiProvider === "deepseek" && process.env.DEEPSEEK_API_KEY) {
             const { extractLessonContentDeepseek } = await import("@/lib/deepseek/client");
-            aiData = await extractLessonContentDeepseek(rawText);
+            aiData = await extractLessonContentDeepseek(rawText, vocabLimit);
           } else {
             console.warn(`AI Provider '${aiProvider}' is missing its API Key. Skipping extraction.`);
           }

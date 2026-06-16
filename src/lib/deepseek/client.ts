@@ -56,22 +56,34 @@ const jsonSchema = {
   strict: true
 };
 
-/**
- * Sends text to DeepSeek AI to extract vocabulary and grammar points.
- */
-export async function extractLessonContentDeepseek(text: string) {
+export async function extractLessonContentDeepseek(text: string, limit: number = 10) {
   if (!process.env.DEEPSEEK_API_KEY) {
     throw new Error("DEEPSEEK_API_KEY is missing");
   }
 
+  // Clone schema and dynamically set vocabulary limit description
+  const customJsonSchema = {
+    ...jsonSchema,
+    schema: {
+      ...jsonSchema.schema,
+      properties: {
+        ...jsonSchema.schema.properties,
+        vocabularies: {
+          ...jsonSchema.schema.properties.vocabularies,
+          description: `List of at most ${limit} most important vocabularies extracted from the lesson`
+        }
+      }
+    }
+  };
+
   const prompt = `
 Bạn là một giáo viên tiếng Anh xuất sắc. Dưới đây là nội dung văn bản của một bài học tiếng Anh.
-Nhiệm vụ của bạn là phân tích văn bản này và trích xuất ra các từ vựng quan trọng nhất (tối đa 10 từ) và các điểm ngữ pháp đáng chú ý (tối đa 3 điểm).
+Nhiệm vụ của bạn là phân tích văn bản này và trích xuất ra các từ vựng quan trọng nhất (tối đa ${limit} từ) và các điểm ngữ pháp đáng chú ý (tối đa 3 điểm).
 Đối với mỗi từ vựng, hãy đặt một câu ví dụ tiếng Anh (lấy từ văn bản hoặc tự tạo) và dịch sang tiếng Việt.
 Đối với ngữ pháp, hãy giải thích ngắn gọn cách dùng và đưa ra ví dụ.
 
 BẠN BẮT BUỘC PHẢI TRẢ VỀ MỘT ĐỐI TƯỢNG JSON TUÂN THỦ ĐÚNG SCHEMA SAU ĐÂY:
-${JSON.stringify(jsonSchema.schema, null, 2)}
+${JSON.stringify(customJsonSchema.schema, null, 2)}
 
 Nội dung bài học:
 """

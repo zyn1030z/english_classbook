@@ -27,11 +27,23 @@ export function VocabularyTable({
 }) {
   const [query, setQuery] = React.useState("");
   const [difficulty, setDifficulty] = React.useState("all");
+  const [selectedLessonId, setSelectedLessonId] = React.useState("all");
+
+  const availableLessons = React.useMemo(() => {
+    const lessonsMap = new Map<string, string>();
+    vocabularies.forEach((v) => {
+      if (v.lessonId && v.lesson?.title) {
+        lessonsMap.set(v.lessonId, v.lesson.title);
+      }
+    });
+    return Array.from(lessonsMap.entries()).map(([id, title]) => ({ id, title }));
+  }, [vocabularies]);
 
   const filtered = vocabularies.filter((item) => {
     const matchesQuery = `${item.word} ${item.meaning} ${item.category}`.toLowerCase().includes(query.toLowerCase());
     const matchesDifficulty = difficulty === "all" || item.difficulty === difficulty;
-    return matchesQuery && matchesDifficulty;
+    const matchesLesson = selectedLessonId === "all" || item.lessonId === selectedLessonId;
+    return matchesQuery && matchesDifficulty && matchesLesson;
   });
 
   function speak(word: string) {
@@ -45,13 +57,13 @@ export function VocabularyTable({
       <CardHeader>
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <CardTitle>Vocabulary bank</CardTitle>
-          <div className="grid gap-3 sm:grid-cols-[1fr_160px] md:w-[520px]">
+          <div className="grid gap-3 sm:grid-cols-[1fr_140px_140px] md:w-[600px]">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input value={query} onChange={(event) => setQuery(event.target.value)} className="pl-9 dark:border-white/10 dark:bg-black/20 focus-visible:ring-primary/50" placeholder="Search word, meaning, category" />
             </div>
             <Select value={difficulty} onValueChange={setDifficulty}>
-              <SelectTrigger aria-label="Difficulty filter" className="dark:border-white/10 dark:bg-black/20 focus:ring-primary/50">
+              <SelectTrigger aria-label="Difficulty filter" className="dark:border-white/10 dark:bg-black/20 focus:ring-primary/50 truncate">
                 <SelectValue placeholder="Difficulty" />
               </SelectTrigger>
               <SelectContent>
@@ -59,6 +71,19 @@ export function VocabularyTable({
                 <SelectItem value="easy">Easy</SelectItem>
                 <SelectItem value="medium">Medium</SelectItem>
                 <SelectItem value="hard">Hard</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={selectedLessonId} onValueChange={setSelectedLessonId}>
+              <SelectTrigger aria-label="Lesson filter" className="dark:border-white/10 dark:bg-black/20 focus:ring-primary/50 truncate">
+                <SelectValue placeholder="Lesson" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All lessons</SelectItem>
+                {availableLessons.map((lesson) => (
+                  <SelectItem key={lesson.id} value={lesson.id}>
+                    {lesson.title}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -82,6 +107,13 @@ export function VocabularyTable({
                   <TableCell>
                     <div className="font-medium">{item.word}</div>
                     <div className="font-mono text-xs text-muted-foreground">{item.ipa}</div>
+                    {item.lesson && (
+                      <div className="mt-1">
+                        <Badge variant="outline" className="text-[10px] text-muted-foreground font-normal border-dashed border-border/50 dark:border-white/10 px-1.5 py-0">
+                          {item.lesson.title}
+                        </Badge>
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell>{item.meaning}</TableCell>
                   <TableCell>

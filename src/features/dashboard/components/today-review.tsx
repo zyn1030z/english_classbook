@@ -8,7 +8,7 @@ export function TodayReview() {
   const due = flashcards.filter((card) => new Date(card.nextReview) <= new Date());
 
   return (
-    <Card>
+    <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md">
       <CardHeader>
         <CardTitle>Today&apos;s review</CardTitle>
         <CardDescription>{due.length} cards are ready for spaced repetition.</CardDescription>
@@ -16,7 +16,7 @@ export function TodayReview() {
       <CardContent className="space-y-4">
         <div className="space-y-3">
           {due.map((card) => (
-            <div key={card.id} className="flex items-center justify-between rounded-md border p-3">
+            <div key={card.id} className="flex items-center justify-between rounded-md border dark:border-white/10 dark:bg-black/20 p-3">
               <div>
                 <p className="font-medium">{card.front}</p>
                 <p className="text-sm text-muted-foreground">Interval {card.interval} days</p>

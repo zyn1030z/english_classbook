@@ -22,6 +22,7 @@ function SubmitButton() {
 
 export function LessonForm() {
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
+  const [vocabLimit, setVocabLimit] = React.useState(10);
   const formRef = React.useRef<HTMLFormElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,6 +34,7 @@ export function LessonForm() {
   const handleFormSubmit = () => {
     setTimeout(() => {
       setSelectedFile(null);
+      setVocabLimit(10);
       formRef.current?.reset();
     }, 100);
   };
@@ -53,6 +55,23 @@ export function LessonForm() {
           <Input name="title" placeholder="Lesson title" required className="dark:border-white/10 dark:bg-black/20 focus-visible:ring-primary/50" />
           <Textarea name="description" placeholder="What did this lesson cover?" className="dark:border-white/10 dark:bg-black/20 focus-visible:ring-primary/50" />
           <Input name="tags" placeholder="Tags separated by commas" className="dark:border-white/10 dark:bg-black/20 focus-visible:ring-primary/50" />
+          
+          <div className="space-y-2 py-2">
+            <div className="flex justify-between text-xs font-medium text-muted-foreground">
+              <span>Vocabulary Extraction Limit</span>
+              <span className="text-primary font-semibold">{vocabLimit} words</span>
+            </div>
+            <input
+              type="range"
+              min="5"
+              max="100"
+              step="5"
+              value={vocabLimit}
+              onChange={(e) => setVocabLimit(Number(e.target.value))}
+              className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary focus:outline-none dark:bg-white/10"
+            />
+            <input type="hidden" name="vocabLimit" value={vocabLimit} />
+          </div>
           <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto]">
             <Select name="status" defaultValue="draft">
               <SelectTrigger aria-label="Lesson status" className="dark:border-white/10 dark:bg-black/20 focus:ring-primary/50">

@@ -92,7 +92,7 @@ export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] })
         className="block h-auto w-full rounded-xl p-0 text-left font-normal hover:bg-transparent whitespace-normal"
         onClick={() => setFlipped((value) => !value)}
       >
-        <Card className="min-h-[320px] border-2">
+        <Card className="min-h-[320px] border-2 dark:border-white/10 dark:bg-[#161616] shadow-md transition-colors">
           <CardContent className="flex min-h-[320px] flex-col items-center justify-center p-8 text-center">
             <p className="text-sm uppercase text-muted-foreground">{flipped ? "Back" : "Front"}</p>
             <p className="mt-5 whitespace-pre-line text-3xl font-semibold leading-tight">{flipped ? card.back : card.front}</p>

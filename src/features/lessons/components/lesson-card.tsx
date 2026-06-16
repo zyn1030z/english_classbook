@@ -22,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { deleteLesson, generateLessonQuiz } from "@/features/lessons/actions";
+import { deleteLesson, generateLessonQuiz, updateLessonStatus } from "@/features/lessons/actions";
 import type { Lesson } from "@/types";
 import { EditLessonSheet } from "./edit-lesson-sheet";
 import { useRouter } from "next/navigation";
@@ -30,6 +30,7 @@ import { useRouter } from "next/navigation";
 export function LessonCard({ lesson }: { lesson: Lesson }) {
   const [isDeleting, startDelete] = useTransition();
   const [isGenerating, startGenerate] = useTransition();
+  const [isPublishing, startPublish] = useTransition();
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const router = useRouter();
 
@@ -37,6 +38,12 @@ export function LessonCard({ lesson }: { lesson: Lesson }) {
     startDelete(async () => {
       await deleteLesson(lesson.id);
       setShowDeleteAlert(false);
+    });
+  };
+
+  const handlePublish = () => {
+    startPublish(async () => {
+      await updateLessonStatus(lesson.id, "published");
     });
   };
 
@@ -78,17 +85,31 @@ export function LessonCard({ lesson }: { lesson: Lesson }) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg">
-                  <DropdownMenuItem 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleGenerateQuiz();
-                    }}
-                    className="gap-2 cursor-pointer text-primary focus:text-primary focus:bg-primary/5 font-medium"
-                    disabled={isGenerating}
-                  >
-                    {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <span className="text-lg">🪄</span>} 
-                    {isGenerating ? "AI is generating..." : "Generate & Play Quiz"}
-                  </DropdownMenuItem>
+                  {lesson.status === "draft" ? (
+                    <DropdownMenuItem 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handlePublish();
+                      }}
+                      className="gap-2 cursor-pointer text-amber-600 focus:text-amber-600 focus:bg-amber-50 dark:focus:bg-amber-950/20 font-medium"
+                      disabled={isPublishing}
+                    >
+                      {isPublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <span>🚀</span>}
+                      {isPublishing ? "Publishing..." : "Publish Lesson"}
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleGenerateQuiz();
+                      }}
+                      className="gap-2 cursor-pointer text-primary focus:text-primary focus:bg-primary/5 font-medium"
+                      disabled={isGenerating}
+                    >
+                      {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <span className="text-lg">🪄</span>} 
+                      {isGenerating ? "AI is generating..." : "Generate & Play Quiz"}
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <EditLessonSheet lesson={lesson} />
                   <DropdownMenuSeparator />
@@ -127,10 +148,20 @@ export function LessonCard({ lesson }: { lesson: Lesson }) {
             </div>
           </div>
           
-          <div className="flex items-center gap-2 text-xs font-medium text-green-600/80 dark:text-green-400/80">
-            <FileText className="h-3.5 w-3.5" />
-            AI Extraction ready
-          </div>
+          {lesson.status === "draft" ? (
+            <div className="flex items-center gap-2 text-xs font-medium text-amber-600 dark:text-amber-400">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+              </span>
+              Draft Mode (Publish to activate Quiz)
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-xs font-medium text-green-600/80 dark:text-green-400/80">
+              <FileText className="h-3.5 w-3.5" />
+              AI Extraction ready
+            </div>
+          )}
         </CardContent>
       </Card>
 

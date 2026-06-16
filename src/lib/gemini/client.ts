@@ -49,17 +49,26 @@ const lessonExtractionSchema: Schema = {
   required: ["vocabularies", "grammarTopics"]
 };
 
-/**
- * Sends text to Gemini AI to extract vocabulary and grammar points.
- */
-export async function extractLessonContent(text: string) {
+export async function extractLessonContent(text: string, limit: number = 10) {
   if (!process.env.GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY is missing");
   }
 
+  // Clone schema and dynamically set vocabulary limit description
+  const customSchema = {
+    ...lessonExtractionSchema,
+    properties: {
+      ...lessonExtractionSchema.properties,
+      vocabularies: {
+        ...(lessonExtractionSchema.properties as any).vocabularies,
+        description: `List of at most ${limit} most important vocabularies extracted from the lesson`
+      }
+    }
+  };
+
   const prompt = `
 Bạn là một giáo viên tiếng Anh xuất sắc. Dưới đây là nội dung văn bản của một bài học tiếng Anh.
-Nhiệm vụ của bạn là phân tích văn bản này và trích xuất ra các từ vựng quan trọng nhất (tối đa 10 từ) và các điểm ngữ pháp đáng chú ý (tối đa 3 điểm).
+Nhiệm vụ của bạn là phân tích văn bản này và trích xuất ra các từ vựng quan trọng nhất (tối đa ${limit} từ) và các điểm ngữ pháp đáng chú ý (tối đa 3 điểm).
 Hãy trả về dữ liệu tuân thủ chính xác định dạng JSON schema đã được cấu hình.
 Đối với mỗi từ vựng, hãy đặt một câu ví dụ tiếng Anh (lấy từ văn bản hoặc tự tạo) và dịch sang tiếng Việt.
 Đối với ngữ pháp, hãy giải thích ngắn gọn cách dùng và đưa ra ví dụ.
@@ -76,7 +85,7 @@ ${text}
       contents: prompt,
       config: {
         responseMimeType: "application/json",
-        responseSchema: lessonExtractionSchema,
+        responseSchema: customSchema,
         temperature: 0.2, // Low temperature for more deterministic JSON output
       }
     });

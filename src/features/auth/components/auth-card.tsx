@@ -11,7 +11,7 @@ export function AuthCard({ message }: { message?: string }) {
   const [mode, setMode] = React.useState<"signin" | "signup">("signin");
 
   return (
-    <Card className="w-full max-w-md border-border/60 shadow-xl transition-all duration-300">
+    <Card className="w-full max-w-md shadow-xl transition-all duration-300 dark:border-white/10 dark:bg-[#161616]">
       <CardHeader className="space-y-1">
         <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-md">
           <BookOpen className="h-5 w-5" />
@@ -34,16 +34,16 @@ export function AuthCard({ message }: { message?: string }) {
 
         {mode === "signin" ? (
           <form action={signInWithEmail} className="space-y-3">
-            <Input name="email" type="email" placeholder="Email address" required className="h-10" />
-            <Input name="password" type="password" placeholder="Password" required minLength={6} className="h-10" />
+            <Input name="email" type="email" placeholder="Email address" required className="h-10 dark:border-white/10 dark:bg-black/20 focus-visible:ring-primary/50" />
+            <Input name="password" type="password" placeholder="Password" required minLength={6} className="h-10 dark:border-white/10 dark:bg-black/20 focus-visible:ring-primary/50" />
             <Button className="w-full h-10 font-medium" type="submit">
               Sign in
             </Button>
           </form>
         ) : (
           <form action={signUpWithEmail} className="space-y-3">
-            <Input name="email" type="email" placeholder="Email address" required className="h-10" />
-            <Input name="password" type="password" placeholder="Password" required minLength={6} className="h-10" />
+            <Input name="email" type="email" placeholder="Email address" required className="h-10 dark:border-white/10 dark:bg-black/20 focus-visible:ring-primary/50" />
+            <Input name="password" type="password" placeholder="Password" required minLength={6} className="h-10 dark:border-white/10 dark:bg-black/20 focus-visible:ring-primary/50" />
             <Button className="w-full h-10 font-medium" type="submit" variant="default">
               Create account
             </Button>
