@@ -1,9 +1,9 @@
 import { Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { vocabularies } from "@/lib/utils/demo-data";
+import type { Vocabulary } from "@/types";
 
-export function VocabularyCards() {
+export function VocabularyCards({ vocabularies }: { vocabularies: Vocabulary[] }) {
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
       {vocabularies.map((item) => (

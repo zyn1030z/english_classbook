@@ -1,8 +1,43 @@
 import { LessonForm } from "@/features/lessons/components/lesson-form";
 import { LessonList } from "@/features/lessons/components/lesson-list";
-import { lessons } from "@/lib/utils/demo-data";
+import { lessons as demoLessons } from "@/lib/utils/demo-data";
+import { createClient } from "@/lib/supabase/server";
+import { hasSupabaseConfig } from "@/lib/supabase/config";
+import type { Lesson } from "@/types";
 
-export default function LessonsPage() {
+export default async function LessonsPage() {
+  let activeLessons: Lesson[] = demoLessons;
+
+  if (hasSupabaseConfig()) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: dbLessons } = await supabase
+        .from("lessons")
+        .select(`
+          *,
+          vocabularies(id),
+          grammar_notes(id)
+        `)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (dbLessons) {
+        activeLessons = dbLessons.map((l: any) => ({
+          id: l.id,
+          userId: l.user_id,
+          title: l.title,
+          description: l.description || "",
+          date: l.created_at,
+          tags: l.tags || [],
+          status: l.status,
+          vocabularyCount: l.vocabularies?.length || 0,
+          grammarCount: l.grammar_notes?.length || 0
+        }));
+      }
+    }
+  }
+
   return (
     <div className="space-y-6">
       <section>
@@ -10,7 +45,7 @@ export default function LessonsPage() {
         <h1 className="mt-1 text-3xl font-semibold">Organize every English lesson</h1>
       </section>
       <LessonForm />
-      <LessonList lessons={lessons} />
+      <LessonList lessons={activeLessons} />
     </div>
   );
 }

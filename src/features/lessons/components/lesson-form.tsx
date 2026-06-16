@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { useFormStatus } from "react-dom";
 import { FileUp, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,22 @@ function SubmitButton() {
 }
 
 export function LessonForm() {
+  const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
+  const formRef = React.useRef<HTMLFormElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const handleFormSubmit = () => {
+    setTimeout(() => {
+      setSelectedFile(null);
+      formRef.current?.reset();
+    }, 100);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -27,7 +44,12 @@ export function LessonForm() {
         <CardDescription>Capture a class, video, article, or file import as a lesson.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form action={createLesson} className="space-y-4">
+        <form
+          ref={formRef}
+          action={createLesson}
+          onSubmit={handleFormSubmit}
+          className="space-y-4"
+        >
           <Input name="title" placeholder="Lesson title" required />
           <Textarea name="description" placeholder="What did this lesson cover?" />
           <Input name="tags" placeholder="Tags separated by commas" />
@@ -42,9 +64,22 @@ export function LessonForm() {
                 <SelectItem value="archived">Archived</SelectItem>
               </SelectContent>
             </Select>
-            <Button type="button" variant="outline">
-              <FileUp className="h-4 w-4" />
-              Upload
+            <input
+              type="file"
+              name="file"
+              accept=".pdf,.docx,.txt"
+              className="hidden"
+              id="file-upload"
+              onChange={handleFileChange}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => document.getElementById("file-upload")?.click()}
+              className="max-w-[200px] truncate"
+            >
+              <FileUp className="h-4 w-4 shrink-0" />
+              <span className="truncate">{selectedFile ? selectedFile.name : "Upload"}</span>
             </Button>
             <SubmitButton />
           </div>

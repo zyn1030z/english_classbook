@@ -8,8 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useNotebookStore } from "@/stores/notebook-store";
-import type { Difficulty } from "@/types";
+import type { Difficulty, Vocabulary } from "@/types";
 
 const difficultyTone: Record<Difficulty, "green" | "amber" | "red"> = {
   easy: "green",
@@ -17,8 +16,15 @@ const difficultyTone: Record<Difficulty, "green" | "amber" | "red"> = {
   hard: "red"
 };
 
-export function VocabularyTable() {
-  const { vocabularies, toggleFavorite, toggleLearned } = useNotebookStore();
+export function VocabularyTable({
+  vocabularies,
+  onToggleFavorite,
+  onToggleLearned
+}: {
+  vocabularies: Vocabulary[];
+  onToggleFavorite: (id: string) => void;
+  onToggleLearned: (id: string) => void;
+}) {
   const [query, setQuery] = React.useState("");
   const [difficulty, setDifficulty] = React.useState("all");
 
@@ -90,10 +96,10 @@ export function VocabularyTable() {
                       <Button variant="outline" size="icon" aria-label={`Pronounce ${item.word}`} onClick={() => speak(item.word)}>
                         <Volume2 className="h-4 w-4" />
                       </Button>
-                      <Button variant={item.isFavorite ? "secondary" : "outline"} size="icon" aria-label="Toggle favorite" onClick={() => toggleFavorite(item.id)}>
+                      <Button variant={item.isFavorite ? "secondary" : "outline"} size="icon" aria-label="Toggle favorite" onClick={() => onToggleFavorite(item.id)}>
                         <Star className="h-4 w-4" />
                       </Button>
-                      <Button variant={item.isLearned ? "secondary" : "outline"} size="icon" aria-label="Toggle learned" onClick={() => toggleLearned(item.id)}>
+                      <Button variant={item.isLearned ? "secondary" : "outline"} size="icon" aria-label="Toggle learned" onClick={() => onToggleLearned(item.id)}>
                         <Check className="h-4 w-4" />
                       </Button>
                     </div>

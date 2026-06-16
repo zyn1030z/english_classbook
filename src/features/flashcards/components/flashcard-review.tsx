@@ -6,7 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { calculateNextReview } from "@/features/flashcards/sm2";
-import { flashcards } from "@/lib/utils/demo-data";
+import { submitFlashcardReview } from "@/features/flashcards/actions";
+import { hasSupabaseConfig } from "@/lib/supabase/config";
+import type { Flashcard } from "@/types";
 
 const ratings = [
   { key: "1", label: "Again", quality: 1, variant: "destructive" as const },
@@ -15,11 +17,21 @@ const ratings = [
   { key: "4", label: "Easy", quality: 5, variant: "default" as const }
 ];
 
-export function FlashcardReview() {
+export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] }) {
   const [index, setIndex] = React.useState(0);
   const [flipped, setFlipped] = React.useState(false);
   const [schedule, setSchedule] = React.useState<string>("Choose a review rating to schedule the next review.");
-  const card = flashcards[index % flashcards.length];
+
+  if (!initialCards || initialCards.length === 0) {
+    return (
+      <div className="flex min-h-[320px] flex-col items-center justify-center text-center">
+        <p className="text-muted-foreground">You are all caught up!</p>
+        <p className="mt-2 text-sm text-muted-foreground">No flashcards are due for review right now.</p>
+      </div>
+    );
+  }
+
+  const card = initialCards[index % initialCards.length];
 
   React.useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -37,9 +49,24 @@ export function FlashcardReview() {
     return () => window.removeEventListener("keydown", onKeyDown);
   });
 
-  function review(quality: 1 | 3 | 4 | 5) {
+  async function review(quality: 1 | 3 | 4 | 5) {
     const next = calculateNextReview(card.easeFactor, card.interval, card.repetitions, quality);
-    setSchedule(`Next review in ${next.interval} day${next.interval === 1 ? "" : "s"} with EF ${next.easeFactor}.`);
+    setSchedule(`Next review in ${next.interval} day${next.interval === 1 ? "" : "s"} with EF ${next.easeFactor.toFixed(2)}.`);
+    
+    // Lưu vào DB
+    if (hasSupabaseConfig()) {
+      const nextReviewDate = new Date();
+      nextReviewDate.setDate(nextReviewDate.getDate() + next.interval);
+      await submitFlashcardReview(
+        card.id,
+        quality,
+        next.easeFactor,
+        next.interval,
+        next.repetitions,
+        nextReviewDate.toISOString()
+      );
+    }
+
     setFlipped(false);
     setIndex((value) => value + 1);
   }
@@ -54,7 +81,7 @@ export function FlashcardReview() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Badge tone="blue">Card {(index % flashcards.length) + 1} / {flashcards.length}</Badge>
+          <Badge tone="blue">Card {(index % initialCards.length) + 1} / {initialCards.length}</Badge>
           <Badge>{card.mode}</Badge>
         </div>
         <p className="text-sm text-muted-foreground">{schedule}</p>
