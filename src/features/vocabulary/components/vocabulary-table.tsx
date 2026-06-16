@@ -28,6 +28,8 @@ export function VocabularyTable({
   const [query, setQuery] = React.useState("");
   const [difficulty, setDifficulty] = React.useState("all");
   const [selectedLessonId, setSelectedLessonId] = React.useState("all");
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const itemsPerPage = 10;
 
   const availableLessons = React.useMemo(() => {
     const lessonsMap = new Map<string, string>();
@@ -45,6 +47,14 @@ export function VocabularyTable({
     const matchesLesson = selectedLessonId === "all" || item.lessonId === selectedLessonId;
     return matchesQuery && matchesDifficulty && matchesLesson;
   });
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  // Reset page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [query, difficulty, selectedLessonId]);
 
   function speak(word: string) {
     if (!("speechSynthesis" in window)) return;
@@ -102,44 +112,81 @@ export function VocabularyTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((item) => (
-                <TableRow key={item.id} className="align-top">
-                  <TableCell>
-                    <div className="font-medium">{item.word}</div>
-                    <div className="font-mono text-xs text-muted-foreground">{item.ipa}</div>
-                    {item.lesson && (
-                      <div className="mt-1">
-                        <Badge variant="outline" className="text-[10px] text-muted-foreground font-normal border-dashed border-border/50 dark:border-white/10 px-1.5 py-0">
-                          {item.lesson.title}
-                        </Badge>
+              {currentItems.length > 0 ? (
+                currentItems.map((item) => (
+                  <TableRow key={item.id} className="align-top">
+                    <TableCell>
+                      <div className="font-medium">{item.word}</div>
+                      <div className="font-mono text-xs text-muted-foreground">{item.ipa}</div>
+                      {item.lesson && (
+                        <div className="mt-1">
+                          <Badge variant="outline" className="text-[10px] text-muted-foreground font-normal border-dashed border-border/50 dark:border-white/10 px-1.5 py-0">
+                            {item.lesson.title}
+                          </Badge>
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>{item.meaning}</TableCell>
+                    <TableCell>
+                      <Badge>{item.category}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge tone={difficultyTone[item.difficulty]}>{item.difficulty}</Badge>
+                    </TableCell>
+                    <TableCell className="max-w-xs text-muted-foreground">{item.examples[0]?.sentence}</TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" size="icon" aria-label={`Pronounce ${item.word}`} onClick={() => speak(item.word)}>
+                          <Volume2 className="h-4 w-4" />
+                        </Button>
+                        <Button variant={item.isFavorite ? "secondary" : "outline"} size="icon" aria-label="Toggle favorite" onClick={() => onToggleFavorite(item.id)}>
+                          <Star className="h-4 w-4" />
+                        </Button>
+                        <Button variant={item.isLearned ? "secondary" : "outline"} size="icon" aria-label="Toggle learned" onClick={() => onToggleLearned(item.id)}>
+                          <Check className="h-4 w-4" />
+                        </Button>
                       </div>
-                    )}
-                  </TableCell>
-                  <TableCell>{item.meaning}</TableCell>
-                  <TableCell>
-                    <Badge>{item.category}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge tone={difficultyTone[item.difficulty]}>{item.difficulty}</Badge>
-                  </TableCell>
-                  <TableCell className="max-w-xs text-muted-foreground">{item.examples[0]?.sentence}</TableCell>
-                  <TableCell>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="icon" aria-label={`Pronounce ${item.word}`} onClick={() => speak(item.word)}>
-                        <Volume2 className="h-4 w-4" />
-                      </Button>
-                      <Button variant={item.isFavorite ? "secondary" : "outline"} size="icon" aria-label="Toggle favorite" onClick={() => onToggleFavorite(item.id)}>
-                        <Star className="h-4 w-4" />
-                      </Button>
-                      <Button variant={item.isLearned ? "secondary" : "outline"} size="icon" aria-label="Toggle learned" onClick={() => onToggleLearned(item.id)}>
-                        <Check className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center">
+                    No vocabulary found.
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
+
+          {totalPages > 1 && (
+            <div className="mt-6 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="text-sm text-muted-foreground">
+                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filtered.length)} of {filtered.length} entries
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <div className="text-sm font-medium px-2 py-1 bg-muted/50 rounded-md">
+                  Page {currentPage} of {totalPages}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
       </CardContent>
     </Card>
   );

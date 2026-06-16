@@ -72,7 +72,8 @@ export async function createLesson(formData: FormData) {
       }
 
       const fileExt = file.name.split(".").pop();
-      const filePath = `${userId}/${lesson.id}/${Date.now()}.${fileExt}`;
+      const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+      const filePath = `${userId}/${lesson.id}/${Date.now()}_${safeName}`;
 
       // Khởi tạo Supabase Admin Client để vượt qua RLS (Row Level Security) khi upload Storage
       const { createClient: createAdminClient } = await import("@supabase/supabase-js");
@@ -96,10 +97,9 @@ export async function createLesson(formData: FormData) {
           .from("lesson_files")
           .insert({
             lesson_id: lesson.id,
-            file_name: file.name,
-            file_path: storageData.path,
-            file_size: file.size,
-            mime_type: file.type
+            file_url: storageData.path,
+            file_type: file.type,
+            processing_status: 'completed'
           });
         
         if (fileDbError) {
@@ -370,15 +370,51 @@ export async function generateLessonQuiz(lessonId: string) {
 
 export async function getLessonFile(lessonId: string) {
   if (!hasSupabaseConfig()) return null;
+
+  // Verify ownership through lessons table (RLS-protected)
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id;
+  if (!userId) return null;
+
+  const { data: lesson } = await supabase
+    .from("lessons")
+    .select("id")
+    .eq("id", lessonId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!lesson) return null;
+
+  // Use admin client to read lesson_files (no user_id column → RLS blocks regular client)
+  const { createClient: createAdminClient } = await import("@supabase/supabase-js");
+  const supabaseAdmin = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { data, error } = await supabaseAdmin
     .from("lesson_files")
-    .select("id, file_name, file_path, mime_type")
+    .select("id, file_url, file_type")
     .eq("lesson_id", lessonId)
     .maybeSingle();
 
+  if (error) {
+    console.error("Lỗi getLessonFile:", error);
+  }
+
   if (error || !data) return null;
-  return data;
+
+  const fileNameParts = data.file_url.split("/");
+  const lastPart = fileNameParts[fileNameParts.length - 1];
+  const fileName = lastPart.includes("_") ? lastPart.substring(lastPart.indexOf("_") + 1) : lastPart;
+
+  return { 
+    id: data.id, 
+    file_name: fileName, 
+    file_path: data.file_url, 
+    mime_type: data.file_type 
+  };
 }
 
 export async function reExtractVocabulary(lessonId: string, limit: number = 10) {
@@ -389,8 +425,14 @@ export async function reExtractVocabulary(lessonId: string, limit: number = 10) 
   const userId = userData.user?.id;
   if (!userId) return { ok: false, message: "Unauthorized" };
 
-  // 1. Get file record
-  const { data: fileRecord, error: fileError } = await supabase
+  // 1. Get file record (admin client needed - lesson_files has no user_id for RLS)
+    const { createClient: createAdminClient } = await import("@supabase/supabase-js");
+    const supabaseAdmin = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { data: fileRecord, error: fileError } = await supabaseAdmin
     .from("lesson_files")
     .select("*")
     .eq("lesson_id", lessonId)
@@ -402,11 +444,6 @@ export async function reExtractVocabulary(lessonId: string, limit: number = 10) 
 
   try {
     // 2. Download file from Storage
-    const { createClient: createAdminClient } = await import("@supabase/supabase-js");
-    const supabaseAdmin = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
 
     const { data: blob, error: downloadError } = await supabaseAdmin.storage
       .from("lesson-files")
@@ -555,7 +592,8 @@ export async function uploadLessonFileAndExtract(lessonId: string, formData: For
 
   try {
     const fileExt = file.name.split(".").pop();
-    const filePath = `${userId}/${lessonId}/${Date.now()}.${fileExt}`;
+    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+    const filePath = `${userId}/${lessonId}/${Date.now()}_${safeName}`;
 
     const { createClient: createAdminClient } = await import("@supabase/supabase-js");
     const supabaseAdmin = createAdminClient(
@@ -579,13 +617,17 @@ export async function uploadLessonFileAndExtract(lessonId: string, formData: For
 
     await supabaseAdmin.from("lesson_files").delete().eq("lesson_id", lessonId);
 
-    await supabaseAdmin.from("lesson_files").insert({
+    const { error: insertError } = await supabaseAdmin.from("lesson_files").insert({
       lesson_id: lessonId,
-      file_name: file.name,
-      file_path: storageData.path,
-      file_size: file.size,
-      mime_type: file.type
+      file_url: storageData.path,
+      file_type: file.type,
+      processing_status: 'completed'
     });
+
+    if (insertError) {
+      console.error("Lỗi insert lesson_files:", insertError);
+      return { ok: false, message: "Không thể lưu metadata của file: " + insertError.message };
+    }
 
     const { extractTextFromFile } = await import("@/lib/utils/file-parser");
     const rawText = await extractTextFromFile(file);
