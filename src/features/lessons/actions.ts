@@ -367,3 +367,301 @@ export async function generateLessonQuiz(lessonId: string) {
   revalidatePath(`/lessons/${lessonId}/quiz`);
   return { ok: true, quizId: quiz.id };
 }
+
+export async function getLessonFile(lessonId: string) {
+  if (!hasSupabaseConfig()) return null;
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("lesson_files")
+    .select("id, file_name, file_path, mime_type")
+    .eq("lesson_id", lessonId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return data;
+}
+
+export async function reExtractVocabulary(lessonId: string, limit: number = 10) {
+  if (!hasSupabaseConfig()) return { ok: false, message: "Database not configured" };
+
+  const supabase = await createClient();
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id;
+  if (!userId) return { ok: false, message: "Unauthorized" };
+
+  // 1. Get file record
+  const { data: fileRecord, error: fileError } = await supabase
+    .from("lesson_files")
+    .select("*")
+    .eq("lesson_id", lessonId)
+    .maybeSingle();
+
+  if (fileError || !fileRecord) {
+    return { ok: false, message: "Bài học không có file đính kèm để trích xuất lại." };
+  }
+
+  try {
+    // 2. Download file from Storage
+    const { createClient: createAdminClient } = await import("@supabase/supabase-js");
+    const supabaseAdmin = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { data: blob, error: downloadError } = await supabaseAdmin.storage
+      .from("lesson-files")
+      .download(fileRecord.file_path);
+
+    if (downloadError || !blob) {
+      return { ok: false, message: "Không thể tải tệp tin từ máy chủ: " + (downloadError?.message || "Unknown error") };
+    }
+
+    // 3. Extract text from file Blob
+    const { extractTextFromFile } = await import("@/lib/utils/file-parser");
+    const file = new File([blob], fileRecord.file_name, { type: fileRecord.mime_type });
+    const rawText = await extractTextFromFile(file);
+
+    if (!rawText || rawText.length <= 50) {
+      return { ok: false, message: "Văn bản trích xuất từ file quá ngắn hoặc trống." };
+    }
+
+    // 4. Extract lesson content via AI
+    const aiProvider = process.env.AI_PROVIDER || "gemini";
+    let aiData = null;
+
+    if (aiProvider === "gemini" && process.env.GEMINI_API_KEY) {
+      const { extractLessonContent } = await import("@/lib/gemini/client");
+      aiData = await extractLessonContent(rawText, limit);
+    } else if (aiProvider === "deepseek" && process.env.DEEPSEEK_API_KEY) {
+      const { extractLessonContentDeepseek } = await import("@/lib/deepseek/client");
+      aiData = await extractLessonContentDeepseek(rawText, limit);
+    } else {
+      return { ok: false, message: `Chưa cấu hình API Key cho AI Provider: ${aiProvider}` };
+    }
+
+    if (!aiData) {
+      return { ok: false, message: "AI trích xuất dữ liệu thất bại." };
+    }
+
+    // 5. Clean up old vocabulary, example sentences, and flashcards associated with this lesson
+    const { data: oldVocabs } = await supabase
+      .from("vocabularies")
+      .select("id")
+      .eq("lesson_id", lessonId);
+
+    const vocabIds = oldVocabs?.map((v) => v.id) || [];
+
+    if (vocabIds.length > 0) {
+      await supabase.from("example_sentences").delete().in("vocabulary_id", vocabIds);
+      await supabase.from("flashcards").delete().in("vocabulary_id", vocabIds);
+      await supabase.from("vocabularies").delete().eq("lesson_id", lessonId);
+    }
+
+    await supabase.from("grammar_notes").delete().eq("lesson_id", lessonId);
+
+    // 6. Insert new Vocabularies & Flashcards & Grammar
+    if (aiData.vocabularies && Array.isArray(aiData.vocabularies)) {
+      for (const vocab of aiData.vocabularies) {
+        const { data: vRecord, error: vError } = await supabase
+          .from("vocabularies")
+          .insert({
+            user_id: userId,
+            lesson_id: lessonId,
+            word: vocab.word,
+            meaning: vocab.meaning,
+            ipa: vocab.ipa,
+            part_of_speech: vocab.partOfSpeech,
+            category: vocab.category,
+            difficulty: vocab.difficulty || 'medium'
+          })
+          .select("id")
+          .single();
+
+        if (!vError && vRecord) {
+          await supabase.from("example_sentences").insert({
+            vocabulary_id: vRecord.id,
+            sentence: vocab.exampleSentence,
+            translation: vocab.exampleTranslation,
+            difficulty: vocab.difficulty || 'medium'
+          });
+
+          await supabase.from("flashcards").insert({
+            vocabulary_id: vRecord.id,
+            user_id: userId,
+            front: vocab.word,
+            back: vocab.meaning,
+            mode: "en_vi"
+          });
+        }
+      }
+    }
+
+    if (aiData.grammarTopics && Array.isArray(aiData.grammarTopics)) {
+      for (const grammar of aiData.grammarTopics) {
+        const { data: topicRecord } = await supabase
+          .from("grammar_topics")
+          .insert({
+            name: grammar.name,
+            level: grammar.level,
+            description: grammar.description
+          })
+          .select("id")
+          .single();
+
+        if (topicRecord) {
+          await supabase.from("grammar_notes").insert({
+            user_id: userId,
+            topic_id: topicRecord.id,
+            lesson_id: lessonId,
+            title: grammar.name,
+            explanation: grammar.explanation,
+            examples: grammar.examples || []
+          });
+        }
+      }
+    }
+
+    revalidatePath("/lessons");
+    revalidatePath("/vocabulary");
+    return { ok: true };
+  } catch (err: any) {
+    console.error("Re-extraction pipeline failed:", err.message);
+    return { ok: false, message: "Lỗi trong quá trình xử lý: " + err.message };
+  }
+}
+
+export async function uploadLessonFileAndExtract(lessonId: string, formData: FormData) {
+  if (!hasSupabaseConfig()) return { ok: false, message: "Database not configured" };
+
+  const supabase = await createClient();
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id;
+  if (!userId) return { ok: false, message: "Unauthorized" };
+
+  const { data: lesson, error: lessonError } = await supabase
+    .from("lessons")
+    .select("id")
+    .eq("id", lessonId)
+    .eq("user_id", userId)
+    .single();
+
+  if (lessonError || !lesson) return { ok: false, message: "Bài học không tồn tại." };
+
+  const vocabLimit = Number(formData.get("vocabLimit")) || 10;
+  const file = formData.get("file") as File | null;
+  if (!file || file.size === 0) {
+    return { ok: false, message: "Vui lòng chọn một tệp hợp lệ." };
+  }
+
+  try {
+    const fileExt = file.name.split(".").pop();
+    const filePath = `${userId}/${lessonId}/${Date.now()}.${fileExt}`;
+
+    const { createClient: createAdminClient } = await import("@supabase/supabase-js");
+    const supabaseAdmin = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { data: buckets } = await supabaseAdmin.storage.listBuckets();
+    const bucketExists = buckets?.some((b) => b.name === "lesson-files");
+    if (!bucketExists) {
+      await supabaseAdmin.storage.createBucket("lesson-files", { public: false, fileSizeLimit: 10485760 });
+    }
+
+    const { data: storageData, error: storageError } = await supabaseAdmin.storage
+      .from("lesson-files")
+      .upload(filePath, file, { contentType: file.type, upsert: true });
+
+    if (storageError || !storageData) {
+      return { ok: false, message: "Upload storage failed: " + storageError?.message };
+    }
+
+    await supabaseAdmin.from("lesson_files").delete().eq("lesson_id", lessonId);
+
+    await supabaseAdmin.from("lesson_files").insert({
+      lesson_id: lessonId,
+      file_name: file.name,
+      file_path: storageData.path,
+      file_size: file.size,
+      mime_type: file.type
+    });
+
+    const { extractTextFromFile } = await import("@/lib/utils/file-parser");
+    const rawText = await extractTextFromFile(file);
+
+    if (!rawText || rawText.length <= 50) {
+      return { ok: false, message: "Văn bản trích xuất từ file quá ngắn hoặc trống." };
+    }
+
+    const aiProvider = process.env.AI_PROVIDER || "gemini";
+    let aiData = null;
+
+    if (aiProvider === "gemini" && process.env.GEMINI_API_KEY) {
+      const { extractLessonContent } = await import("@/lib/gemini/client");
+      aiData = await extractLessonContent(rawText, vocabLimit);
+    } else if (aiProvider === "deepseek" && process.env.DEEPSEEK_API_KEY) {
+      const { extractLessonContentDeepseek } = await import("@/lib/deepseek/client");
+      aiData = await extractLessonContentDeepseek(rawText, vocabLimit);
+    } else {
+      return { ok: false, message: `Chưa cấu hình API Key cho AI Provider: ${aiProvider}` };
+    }
+
+    if (!aiData) return { ok: false, message: "AI trích xuất dữ liệu thất bại." };
+
+    const { data: oldVocabs } = await supabase.from("vocabularies").select("id").eq("lesson_id", lessonId);
+    const vocabIds = oldVocabs?.map((v) => v.id) || [];
+    if (vocabIds.length > 0) {
+      await supabase.from("example_sentences").delete().in("vocabulary_id", vocabIds);
+      await supabase.from("flashcards").delete().in("vocabulary_id", vocabIds);
+      await supabase.from("vocabularies").delete().eq("lesson_id", lessonId);
+    }
+    await supabase.from("grammar_notes").delete().eq("lesson_id", lessonId);
+
+    if (aiData.vocabularies && Array.isArray(aiData.vocabularies)) {
+      for (const vocab of aiData.vocabularies) {
+        const { data: vRecord, error: vError } = await supabase.from("vocabularies").insert({
+          user_id: userId,
+          lesson_id: lessonId,
+          word: vocab.word,
+          meaning: vocab.meaning,
+          ipa: vocab.ipa,
+          part_of_speech: vocab.partOfSpeech,
+          category: vocab.category,
+          difficulty: vocab.difficulty || 'medium'
+        }).select("id").single();
+
+        if (!vError && vRecord) {
+          await supabase.from("example_sentences").insert({
+            vocabulary_id: vRecord.id, sentence: vocab.exampleSentence, translation: vocab.exampleTranslation, difficulty: vocab.difficulty || 'medium'
+          });
+          await supabase.from("flashcards").insert({
+            vocabulary_id: vRecord.id, user_id: userId, front: vocab.word, back: vocab.meaning, mode: "en_vi"
+          });
+        }
+      }
+    }
+
+    if (aiData.grammarTopics && Array.isArray(aiData.grammarTopics)) {
+      for (const grammar of aiData.grammarTopics) {
+        const { data: topicRecord } = await supabase.from("grammar_topics").insert({
+          name: grammar.name, level: grammar.level, description: grammar.description
+        }).select("id").single();
+
+        if (topicRecord) {
+          await supabase.from("grammar_notes").insert({
+            user_id: userId, topic_id: topicRecord.id, lesson_id: lessonId, title: grammar.name, explanation: grammar.explanation, examples: grammar.examples || []
+          });
+        }
+      }
+    }
+
+    revalidatePath("/lessons");
+    revalidatePath("/vocabulary");
+    return { ok: true, file: { id: Date.now().toString(), file_name: file.name } };
+
+  } catch (err: any) {
+    console.error("Upload & Extraction pipeline failed:", err.message);
+    return { ok: false, message: "Lỗi trong quá trình xử lý: " + err.message };
+  }
+}

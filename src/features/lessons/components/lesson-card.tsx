@@ -32,6 +32,7 @@ export function LessonCard({ lesson }: { lesson: Lesson }) {
   const [isGenerating, startGenerate] = useTransition();
   const [isPublishing, startPublish] = useTransition();
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const router = useRouter();
 
   const handleDelete = () => {
@@ -111,7 +112,15 @@ export function LessonCard({ lesson }: { lesson: Lesson }) {
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
-                  <EditLessonSheet lesson={lesson} />
+                  <DropdownMenuItem 
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setIsEditOpen(true);
+                    }}
+                    className="gap-2 cursor-pointer"
+                  >
+                    <Edit2 className="h-4 w-4 text-muted-foreground" /> Edit lesson
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={() => setShowDeleteAlert(true)}
@@ -121,6 +130,7 @@ export function LessonCard({ lesson }: { lesson: Lesson }) {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              <EditLessonSheet lesson={lesson} open={isEditOpen} onOpenChange={setIsEditOpen} />
             </div>
           </div>
         </CardHeader>
