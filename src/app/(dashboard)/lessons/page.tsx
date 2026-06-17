@@ -16,8 +16,8 @@ export default async function LessonsPage() {
         .from("lessons")
         .select(`
           *,
-          vocabularies(id),
-          grammar_notes(id)
+          vocabularies:vocabularies(count),
+          grammar_notes:grammar_notes(count)
         `)
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
@@ -31,8 +31,8 @@ export default async function LessonsPage() {
           date: l.created_at,
           tags: l.tags || [],
           status: l.status,
-          vocabularyCount: l.vocabularies?.length || 0,
-          grammarCount: l.grammar_notes?.length || 0
+          vocabularyCount: l.vocabularies?.[0]?.count || 0,
+          grammarCount: l.grammar_notes?.[0]?.count || 0
         }));
       }
     }

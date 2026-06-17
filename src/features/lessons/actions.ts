@@ -167,19 +167,27 @@ export async function createLesson(formData: FormData) {
               }
             }
 
-            // 2. Process Grammar Topics & Notes
+            // 2. Process Grammar Topics & Notes (upsert to avoid duplicates)
             if (aiData.grammarTopics && Array.isArray(aiData.grammarTopics)) {
               for (const grammar of aiData.grammarTopics) {
-                const { data: topicRecord } = await supabase.from("grammar_topics").insert({
+                // Find existing topic by name+level to avoid duplicates
+                const { data: existingTopic } = await supabase
+                  .from("grammar_topics")
+                  .select("id")
+                  .eq("name", grammar.name)
+                  .eq("level", grammar.level)
+                  .maybeSingle();
+
+                const topicId = existingTopic?.id || (await supabase.from("grammar_topics").insert({
                   name: grammar.name,
                   level: grammar.level,
                   description: grammar.description
-                }).select("id").single();
+                }).select("id").single()).data?.id;
 
-                if (topicRecord) {
+                if (topicId) {
                   await supabase.from("grammar_notes").insert({
                     user_id: userId,
-                    topic_id: topicRecord.id,
+                    topic_id: topicId,
                     lesson_id: lesson.id,
                     title: grammar.name,
                     explanation: grammar.explanation,
@@ -199,6 +207,9 @@ export async function createLesson(formData: FormData) {
   }
 
   revalidatePath("/lessons");
+  revalidatePath("/grammar");
+  revalidatePath("/flashcards");
+  revalidatePath("/vocabulary");
 }
 
 export async function updateLessonStatus(id: string, status: "draft" | "published" | "archived") {
@@ -535,20 +546,23 @@ export async function reExtractVocabulary(lessonId: string, limit: number = 10) 
 
     if (aiData.grammarTopics && Array.isArray(aiData.grammarTopics)) {
       for (const grammar of aiData.grammarTopics) {
-        const { data: topicRecord } = await supabase
+        const { data: existingTopic } = await supabase
           .from("grammar_topics")
-          .insert({
-            name: grammar.name,
-            level: grammar.level,
-            description: grammar.description
-          })
           .select("id")
-          .single();
+          .eq("name", grammar.name)
+          .eq("level", grammar.level)
+          .maybeSingle();
 
-        if (topicRecord) {
+        const topicId = existingTopic?.id || (await supabase.from("grammar_topics").insert({
+          name: grammar.name,
+          level: grammar.level,
+          description: grammar.description
+        }).select("id").single()).data?.id;
+
+        if (topicId) {
           await supabase.from("grammar_notes").insert({
             user_id: userId,
-            topic_id: topicRecord.id,
+            topic_id: topicId,
             lesson_id: lessonId,
             title: grammar.name,
             explanation: grammar.explanation,
@@ -560,6 +574,8 @@ export async function reExtractVocabulary(lessonId: string, limit: number = 10) 
 
     revalidatePath("/lessons");
     revalidatePath("/vocabulary");
+    revalidatePath("/grammar");
+    revalidatePath("/flashcards");
     return { ok: true };
   } catch (err: any) {
     console.error("Re-extraction pipeline failed:", err.message);
@@ -686,13 +702,20 @@ export async function uploadLessonFileAndExtract(lessonId: string, formData: For
 
     if (aiData.grammarTopics && Array.isArray(aiData.grammarTopics)) {
       for (const grammar of aiData.grammarTopics) {
-        const { data: topicRecord } = await supabase.from("grammar_topics").insert({
-          name: grammar.name, level: grammar.level, description: grammar.description
-        }).select("id").single();
+        const { data: existingTopic } = await supabase
+          .from("grammar_topics")
+          .select("id")
+          .eq("name", grammar.name)
+          .eq("level", grammar.level)
+          .maybeSingle();
 
-        if (topicRecord) {
+        const topicId = existingTopic?.id || (await supabase.from("grammar_topics").insert({
+          name: grammar.name, level: grammar.level, description: grammar.description
+        }).select("id").single()).data?.id;
+
+        if (topicId) {
           await supabase.from("grammar_notes").insert({
-            user_id: userId, topic_id: topicRecord.id, lesson_id: lessonId, title: grammar.name, explanation: grammar.explanation, examples: grammar.examples || []
+            user_id: userId, topic_id: topicId, lesson_id: lessonId, title: grammar.name, explanation: grammar.explanation, examples: grammar.examples || []
           });
         }
       }
@@ -700,6 +723,8 @@ export async function uploadLessonFileAndExtract(lessonId: string, formData: For
 
     revalidatePath("/lessons");
     revalidatePath("/vocabulary");
+    revalidatePath("/grammar");
+    revalidatePath("/flashcards");
     return { ok: true, file: { id: Date.now().toString(), file_name: file.name } };
 
   } catch (err: any) {

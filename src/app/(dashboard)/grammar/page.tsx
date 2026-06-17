@@ -1,13 +1,62 @@
 import { GrammarNotebook } from "@/features/grammar/components/grammar-notebook";
+import { grammarNotes as demoNotes, grammarTopics as demoTopics } from "@/lib/utils/demo-data";
+import { createClient } from "@/lib/supabase/server";
+import { hasSupabaseConfig } from "@/lib/supabase/config";
+import type { GrammarTopic, GrammarNote } from "@/types";
 
-export default function GrammarPage() {
+export default async function GrammarPage() {
+  let topics: GrammarTopic[] = demoTopics;
+  let notes: GrammarNote[] = demoNotes;
+
+  if (hasSupabaseConfig()) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      const [topicsRes, notesRes] = await Promise.all([
+        supabase
+          .from("grammar_topics")
+          .select("id, name, level, description, parent_id")
+          .order("name"),
+        supabase
+          .from("grammar_notes")
+          .select("id, user_id, topic_id, lesson_id, title, explanation, examples, notes")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false }),
+      ]);
+
+      if (topicsRes.data) {
+        topics = topicsRes.data.map((t: any) => ({
+          id: t.id,
+          name: t.name,
+          level: t.level,
+          description: t.description || "",
+          parentId: t.parent_id || undefined,
+        }));
+      }
+
+      if (notesRes.data) {
+        notes = notesRes.data.map((n: any) => ({
+          id: n.id,
+          userId: n.user_id,
+          topicId: n.topic_id,
+          lessonId: n.lesson_id || undefined,
+          title: n.title,
+          explanation: n.explanation,
+          examples: n.examples || [],
+          notes: n.notes || "",
+        }));
+      }
+    }
+  }
+
   return (
     <div className="space-y-6">
       <section>
         <p className="text-sm text-muted-foreground">Grammar notebook</p>
         <h1 className="mt-1 text-3xl font-semibold">Topic tree, notes, and examples</h1>
       </section>
-      <GrammarNotebook />
+      <GrammarNotebook topics={topics} notes={notes} />
     </div>
   );
 }

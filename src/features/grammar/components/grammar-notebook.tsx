@@ -6,13 +6,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { grammarNotes, grammarTopics } from "@/lib/utils/demo-data";
+import type { GrammarTopic, GrammarNote } from "@/types";
 
-export function GrammarNotebook() {
-  const [selectedTopic, setSelectedTopic] = React.useState(grammarTopics[0]?.id ?? "");
+interface GrammarNotebookProps {
+  topics: GrammarTopic[];
+  notes: GrammarNote[];
+}
+
+export function GrammarNotebook({ topics, notes: allNotes }: GrammarNotebookProps) {
+  const [selectedTopic, setSelectedTopic] = React.useState(topics[0]?.id ?? "");
   const [query, setQuery] = React.useState("");
 
-  const notes = grammarNotes.filter((note) => {
+  const notes = allNotes.filter((note) => {
     const matchesTopic = note.topicId === selectedTopic;
     const matchesQuery = `${note.title} ${note.explanation} ${note.examples.join(" ")}`.toLowerCase().includes(query.toLowerCase());
     return matchesTopic && matchesQuery;
@@ -26,7 +31,7 @@ export function GrammarNotebook() {
           <CardDescription>Grammar grouped by level and lesson context.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
-          {grammarTopics.map((topic) => (
+          {topics.map((topic) => (
             <Button
               key={topic.id}
               type="button"

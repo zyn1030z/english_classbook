@@ -15,7 +15,7 @@ export default async function FlashcardsPage() {
     if (user) {
       const { data: dbCards } = await supabase
         .from("flashcards")
-        .select("*")
+        .select("id, vocabulary_id, user_id, front, back, mode, ease_factor, interval, repetitions, next_review")
         .eq("user_id", user.id)
         .lte("next_review", new Date().toISOString())
         .order("next_review", { ascending: true });
