@@ -27,6 +27,7 @@ export function EditLessonSheet({ lesson, open, onOpenChange }: { lesson: Lesson
   const [isPending, startTransition] = useTransition();
   const [isExtracting, startExtracting] = useTransition();
   const [vocabLimit, setVocabLimit] = useState(10);
+  const [grammarLimit, setGrammarLimit] = useState(3);
   const [attachedFile, setAttachedFile] = useState<{ id: string; file_name: string } | null>(null);
   const [selectedNewFile, setSelectedNewFile] = useState<File | null>(null);
 
@@ -49,7 +50,7 @@ export function EditLessonSheet({ lesson, open, onOpenChange }: { lesson: Lesson
 
   const handleReExtract = () => {
     startExtracting(async () => {
-      const result = await reExtractVocabulary(lesson.id, vocabLimit);
+      const result = await reExtractVocabulary(lesson.id, vocabLimit, grammarLimit);
       if (result.ok) {
         onOpenChange(false);
       } else {
@@ -63,6 +64,7 @@ export function EditLessonSheet({ lesson, open, onOpenChange }: { lesson: Lesson
     const formData = new FormData();
     formData.append("file", selectedNewFile);
     formData.append("vocabLimit", vocabLimit.toString());
+    formData.append("grammarLimit", grammarLimit.toString());
 
     startExtracting(async () => {
       const result = await uploadLessonFileAndExtract(lesson.id, formData);
@@ -149,7 +151,7 @@ export function EditLessonSheet({ lesson, open, onOpenChange }: { lesson: Lesson
               
               <div className="space-y-2">
                 <div className="flex justify-between text-xs font-medium text-muted-foreground">
-                  <span>Re-extraction Limit</span>
+                  <span>Vocabulary Limit</span>
                   <span className="text-primary font-semibold">{vocabLimit} words</span>
                 </div>
                 <input
@@ -159,6 +161,22 @@ export function EditLessonSheet({ lesson, open, onOpenChange }: { lesson: Lesson
                   step="5"
                   value={vocabLimit}
                   onChange={(e) => setVocabLimit(Number(e.target.value))}
+                  className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary focus:outline-none dark:bg-white/10"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs font-medium text-muted-foreground">
+                  <span>Grammar Limit</span>
+                  <span className="text-primary font-semibold">{grammarLimit} topics</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  step="1"
+                  value={grammarLimit}
+                  onChange={(e) => setGrammarLimit(Number(e.target.value))}
                   className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary focus:outline-none dark:bg-white/10"
                 />
               </div>
@@ -195,6 +213,22 @@ export function EditLessonSheet({ lesson, open, onOpenChange }: { lesson: Lesson
                   step="5"
                   value={vocabLimit}
                   onChange={(e) => setVocabLimit(Number(e.target.value))}
+                  className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary focus:outline-none dark:bg-white/10"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs font-medium text-muted-foreground">
+                  <span>Grammar Limit</span>
+                  <span className="text-primary font-semibold">{grammarLimit} topics</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  step="1"
+                  value={grammarLimit}
+                  onChange={(e) => setGrammarLimit(Number(e.target.value))}
                   className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary focus:outline-none dark:bg-white/10"
                 />
               </div>

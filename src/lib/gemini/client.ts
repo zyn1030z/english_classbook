@@ -4,6 +4,32 @@ import { GoogleGenAI, Type, Schema } from "@google/genai";
 // The SDK automatically picks up the GEMINI_API_KEY environment variable.
 const ai = new GoogleGenAI({});
 
+/** Attempt to parse JSON, with fallback repair for truncated responses */
+function safeJsonParse(text: string) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    // Attempt to repair truncated JSON by finding last complete structure
+    const lastBrace = text.lastIndexOf("}");
+    const lastBracket = text.lastIndexOf("]");
+    const cutoff = Math.max(lastBrace, lastBracket);
+    if (cutoff > 0) {
+      // Try progressively shorter substrings
+      for (let i = cutoff; i >= Math.max(0, cutoff - 200); i--) {
+        const candidate = text.substring(0, i + 1);
+        try {
+          // Attempt to close any open structures
+          const openBraces = (candidate.match(/{/g) || []).length - (candidate.match(/}/g) || []).length;
+          const openBrackets = (candidate.match(/\[/g) || []).length - (candidate.match(/]/g) || []).length;
+          const suffix = "]".repeat(Math.max(0, openBrackets)) + "}".repeat(Math.max(0, openBraces));
+          return JSON.parse(candidate + suffix);
+        } catch { continue; }
+      }
+    }
+    throw new Error(`AI trả về JSON không hợp lệ (${text.length} ký tự). Thử giảm số lượng từ vựng hoặc dùng file ngắn hơn.`);
+  }
+}
+
 // Define the expected output schema for lesson extraction
 const lessonExtractionSchema: Schema = {
   type: Type.OBJECT,
@@ -49,12 +75,12 @@ const lessonExtractionSchema: Schema = {
   required: ["vocabularies", "grammarTopics"]
 };
 
-export async function extractLessonContent(text: string, limit: number = 10) {
+export async function extractLessonContent(text: string, limit: number = 10, grammarLimit: number = 3) {
   if (!process.env.GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY is missing");
   }
 
-  // Clone schema and dynamically set vocabulary limit description
+  // Clone schema and dynamically set limit descriptions
   const customSchema = {
     ...lessonExtractionSchema,
     properties: {
@@ -62,13 +88,17 @@ export async function extractLessonContent(text: string, limit: number = 10) {
       vocabularies: {
         ...(lessonExtractionSchema.properties as any).vocabularies,
         description: `List of at most ${limit} most important vocabularies extracted from the lesson`
+      },
+      grammarTopics: {
+        ...(lessonExtractionSchema.properties as any).grammarTopics,
+        description: `List of ${grammarLimit} key grammar topics used in the lesson`
       }
     }
   };
 
   const prompt = `
 Bạn là một giáo viên tiếng Anh xuất sắc. Dưới đây là nội dung văn bản của một bài học tiếng Anh.
-Nhiệm vụ của bạn là phân tích văn bản này và trích xuất ra các từ vựng quan trọng nhất (tối đa ${limit} từ) và các điểm ngữ pháp đáng chú ý (tối đa 3 điểm).
+Nhiệm vụ của bạn là phân tích văn bản này và trích xuất ra các từ vựng quan trọng nhất (tối đa ${limit} từ) và các điểm ngữ pháp đáng chú ý (tối đa ${grammarLimit} điểm).
 Hãy trả về dữ liệu tuân thủ chính xác định dạng JSON schema đã được cấu hình.
 Đối với mỗi từ vựng, hãy đặt một câu ví dụ tiếng Anh (lấy từ văn bản hoặc tự tạo) và dịch sang tiếng Việt.
 Đối với ngữ pháp, hãy giải thích ngắn gọn cách dùng và đưa ra ví dụ.
@@ -86,12 +116,13 @@ ${text}
       config: {
         responseMimeType: "application/json",
         responseSchema: customSchema,
-        temperature: 0.2, // Low temperature for more deterministic JSON output
+        temperature: 0.2,
+        maxOutputTokens: 65536,
       }
     });
 
     if (response.text) {
-      return JSON.parse(response.text);
+      return safeJsonParse(response.text);
     }
     return null;
   } catch (error) {
@@ -158,11 +189,12 @@ Mỗi câu hỏi phải có ĐÚNG 4 lựa chọn (options) và 1 đáp án đú
         responseMimeType: "application/json",
         responseSchema: quizGenerationSchema,
         temperature: 0.3,
+        maxOutputTokens: 65536,
       }
     });
 
     if (response.text) {
-      return JSON.parse(response.text);
+      return safeJsonParse(response.text);
     }
     return null;
   } catch (error) {

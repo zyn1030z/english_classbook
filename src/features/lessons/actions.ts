@@ -38,6 +38,7 @@ export async function createLesson(formData: FormData) {
   }
 
   const vocabLimit = Number(formData.get("vocabLimit")) || 10;
+  const grammarLimit = Number(formData.get("grammarLimit")) || 3;
 
   // Khởi tạo bài học trong DB
   const { data: lesson, error: lessonError } = await supabase
@@ -121,10 +122,10 @@ export async function createLesson(formData: FormData) {
           
           if (aiProvider === "gemini" && process.env.GEMINI_API_KEY) {
             const { extractLessonContent } = await import("@/lib/gemini/client");
-            aiData = await extractLessonContent(rawText, vocabLimit);
+            aiData = await extractLessonContent(rawText, vocabLimit, grammarLimit);
           } else if (aiProvider === "deepseek" && process.env.DEEPSEEK_API_KEY) {
             const { extractLessonContentDeepseek } = await import("@/lib/deepseek/client");
-            aiData = await extractLessonContentDeepseek(rawText, vocabLimit);
+            aiData = await extractLessonContentDeepseek(rawText, vocabLimit, grammarLimit);
           } else {
             console.warn(`AI Provider '${aiProvider}' is missing its API Key. Skipping extraction.`);
           }
@@ -178,7 +179,7 @@ export async function createLesson(formData: FormData) {
                   .eq("level", grammar.level)
                   .maybeSingle();
 
-                const topicId = existingTopic?.id || (await supabase.from("grammar_topics").insert({
+                const topicId = existingTopic?.id || (await supabaseAdmin.from("grammar_topics").insert({
                   name: grammar.name,
                   level: grammar.level,
                   description: grammar.description
@@ -428,7 +429,7 @@ export async function getLessonFile(lessonId: string) {
   };
 }
 
-export async function reExtractVocabulary(lessonId: string, limit: number = 10) {
+export async function reExtractVocabulary(lessonId: string, limit: number = 10, grammarLimit: number = 3) {
   if (!hasSupabaseConfig()) return { ok: false, message: "Database not configured" };
 
   const supabase = await createClient();
@@ -458,7 +459,7 @@ export async function reExtractVocabulary(lessonId: string, limit: number = 10) 
 
     const { data: blob, error: downloadError } = await supabaseAdmin.storage
       .from("lesson-files")
-      .download(fileRecord.file_path);
+      .download(fileRecord.file_url);
 
     if (downloadError || !blob) {
       return { ok: false, message: "Không thể tải tệp tin từ máy chủ: " + (downloadError?.message || "Unknown error") };
@@ -466,7 +467,8 @@ export async function reExtractVocabulary(lessonId: string, limit: number = 10) 
 
     // 3. Extract text from file Blob
     const { extractTextFromFile } = await import("@/lib/utils/file-parser");
-    const file = new File([blob], fileRecord.file_name, { type: fileRecord.mime_type });
+    const fileName = fileRecord.file_url.split("/").pop() || "document";
+    const file = new File([blob], fileName, { type: fileRecord.file_type });
     const rawText = await extractTextFromFile(file);
 
     if (!rawText || rawText.length <= 50) {
@@ -479,10 +481,10 @@ export async function reExtractVocabulary(lessonId: string, limit: number = 10) 
 
     if (aiProvider === "gemini" && process.env.GEMINI_API_KEY) {
       const { extractLessonContent } = await import("@/lib/gemini/client");
-      aiData = await extractLessonContent(rawText, limit);
+      aiData = await extractLessonContent(rawText, limit, grammarLimit);
     } else if (aiProvider === "deepseek" && process.env.DEEPSEEK_API_KEY) {
       const { extractLessonContentDeepseek } = await import("@/lib/deepseek/client");
-      aiData = await extractLessonContentDeepseek(rawText, limit);
+      aiData = await extractLessonContentDeepseek(rawText, limit, grammarLimit);
     } else {
       return { ok: false, message: `Chưa cấu hình API Key cho AI Provider: ${aiProvider}` };
     }
@@ -490,6 +492,12 @@ export async function reExtractVocabulary(lessonId: string, limit: number = 10) 
     if (!aiData) {
       return { ok: false, message: "AI trích xuất dữ liệu thất bại." };
     }
+
+    console.log("[Re-extract] AI returned:", {
+      vocabCount: aiData.vocabularies?.length || 0,
+      grammarCount: aiData.grammarTopics?.length || 0,
+      keys: Object.keys(aiData),
+    });
 
     // 5. Clean up old vocabulary, example sentences, and flashcards associated with this lesson
     const { data: oldVocabs } = await supabase
@@ -553,7 +561,7 @@ export async function reExtractVocabulary(lessonId: string, limit: number = 10) 
           .eq("level", grammar.level)
           .maybeSingle();
 
-        const topicId = existingTopic?.id || (await supabase.from("grammar_topics").insert({
+        const topicId = existingTopic?.id || (await supabaseAdmin.from("grammar_topics").insert({
           name: grammar.name,
           level: grammar.level,
           description: grammar.description
@@ -601,6 +609,7 @@ export async function uploadLessonFileAndExtract(lessonId: string, formData: For
   if (lessonError || !lesson) return { ok: false, message: "Bài học không tồn tại." };
 
   const vocabLimit = Number(formData.get("vocabLimit")) || 10;
+  const grammarLimit = Number(formData.get("grammarLimit")) || 3;
   const file = formData.get("file") as File | null;
   if (!file || file.size === 0) {
     return { ok: false, message: "Vui lòng chọn một tệp hợp lệ." };
@@ -657,10 +666,10 @@ export async function uploadLessonFileAndExtract(lessonId: string, formData: For
 
     if (aiProvider === "gemini" && process.env.GEMINI_API_KEY) {
       const { extractLessonContent } = await import("@/lib/gemini/client");
-      aiData = await extractLessonContent(rawText, vocabLimit);
+      aiData = await extractLessonContent(rawText, vocabLimit, grammarLimit);
     } else if (aiProvider === "deepseek" && process.env.DEEPSEEK_API_KEY) {
       const { extractLessonContentDeepseek } = await import("@/lib/deepseek/client");
-      aiData = await extractLessonContentDeepseek(rawText, vocabLimit);
+      aiData = await extractLessonContentDeepseek(rawText, vocabLimit, grammarLimit);
     } else {
       return { ok: false, message: `Chưa cấu hình API Key cho AI Provider: ${aiProvider}` };
     }
@@ -709,7 +718,7 @@ export async function uploadLessonFileAndExtract(lessonId: string, formData: For
           .eq("level", grammar.level)
           .maybeSingle();
 
-        const topicId = existingTopic?.id || (await supabase.from("grammar_topics").insert({
+        const topicId = existingTopic?.id || (await supabaseAdmin.from("grammar_topics").insert({
           name: grammar.name, level: grammar.level, description: grammar.description
         }).select("id").single()).data?.id;
 
