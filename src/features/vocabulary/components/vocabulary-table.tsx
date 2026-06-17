@@ -139,11 +139,23 @@ export function VocabularyTable({
                         <Button variant="outline" size="icon" aria-label={`Pronounce ${item.word}`} onClick={() => speak(item.word)}>
                           <Volume2 className="h-4 w-4" />
                         </Button>
-                        <Button variant={item.isFavorite ? "secondary" : "outline"} size="icon" aria-label="Toggle favorite" onClick={() => onToggleFavorite(item.id)}>
-                          <Star className="h-4 w-4" />
+                        <Button
+                          variant={item.isFavorite ? "secondary" : "outline"}
+                          size="icon"
+                          aria-label="Toggle favorite"
+                          onClick={() => onToggleFavorite(item.id)}
+                          className={item.isFavorite ? "bg-amber-500/20 border-amber-500/50 text-amber-500 hover:bg-amber-500/30" : ""}
+                        >
+                          <Star className={`h-4 w-4 transition-colors ${item.isFavorite ? "fill-amber-500 text-amber-500" : ""}`} />
                         </Button>
-                        <Button variant={item.isLearned ? "secondary" : "outline"} size="icon" aria-label="Toggle learned" onClick={() => onToggleLearned(item.id)}>
-                          <Check className="h-4 w-4" />
+                        <Button
+                          variant={item.isLearned ? "secondary" : "outline"}
+                          size="icon"
+                          aria-label="Toggle learned"
+                          onClick={() => onToggleLearned(item.id)}
+                          className={item.isLearned ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-500 hover:bg-emerald-500/30" : ""}
+                        >
+                          <Check className={`h-4 w-4 transition-colors ${item.isLearned ? "text-emerald-500" : ""}`} />
                         </Button>
                       </div>
                     </TableCell>
