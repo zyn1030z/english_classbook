@@ -140,9 +140,9 @@ export function GrammarNotebook({ topics, notes: allNotes }: GrammarNotebookProp
   }
 
   return (
-    <section className="grid gap-4 lg:grid-cols-[320px_1fr]">
+    <section className="grid gap-4 lg:grid-cols-[320px_1fr] items-start min-h-[calc(100vh-12rem)]">
       {/* Topics sidebar — grouped by lesson */}
-      <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md transition-colors">
+      <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md transition-colors flex flex-col">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -155,7 +155,7 @@ export function GrammarNotebook({ topics, notes: allNotes }: GrammarNotebookProp
           </div>
           <CardDescription>Grammar grouped by lesson.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-1 max-h-[600px] overflow-y-auto pr-1">
+        <CardContent className="space-y-1 flex-1 overflow-y-auto pr-1">
           {/* Grouped by lesson */}
           {lessonGroups.grouped.map((group) => {
             const isCollapsed = collapsedLessons.has(group.lessonId);
@@ -217,8 +217,8 @@ export function GrammarNotebook({ topics, notes: allNotes }: GrammarNotebookProp
         </CardContent>
       </Card>
 
-      {/* Notes panel */}
-      <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md transition-colors">
+      {/* Notes panel — sticky */}
+      <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md transition-colors flex flex-col sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto">
         <CardHeader className="pb-3">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
@@ -248,7 +248,7 @@ export function GrammarNotebook({ topics, notes: allNotes }: GrammarNotebookProp
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 flex-1">
           {notes.map((note, i) => (
             <article
               key={note.id}
