@@ -20,7 +20,7 @@ export default async function GrammarPage() {
           .order("name"),
         supabase
           .from("grammar_notes")
-          .select("id, user_id, topic_id, lesson_id, title, explanation, examples, notes")
+          .select("id, user_id, topic_id, lesson_id, title, explanation, examples, notes, lessons(title)")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
       ]);
@@ -41,6 +41,7 @@ export default async function GrammarPage() {
           userId: n.user_id,
           topicId: n.topic_id,
           lessonId: n.lesson_id || undefined,
+          lessonTitle: n.lessons?.title || undefined,
           title: n.title,
           explanation: n.explanation,
           examples: n.examples || [],

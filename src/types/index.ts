@@ -76,6 +76,7 @@ export interface GrammarNote {
   userId: string;
   topicId: string;
   lessonId?: string;
+  lessonTitle?: string;
   title: string;
   explanation: string;
   examples: string[];
