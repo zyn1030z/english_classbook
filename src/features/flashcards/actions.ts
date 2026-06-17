@@ -23,31 +23,22 @@ export async function submitFlashcardReview(
     return { ok: false, message: "Unauthorized" };
   }
 
-  // Cập nhật flashcard state
-  const { error: updateError } = await supabase
-    .from("flashcards")
-    .update({
-      ease_factor: easeFactor,
-      interval: interval,
-      repetitions: repetitions,
-      next_review: nextReview
-    })
-    .eq("id", flashcardId)
-    .eq("user_id", user.id);
-
-  if (updateError) {
-    return { ok: false, message: updateError.message };
-  }
-
-  // Ghi log review
-  await supabase.from("flashcard_reviews").insert({
+  // Upsert review record with latest SM-2 state
+  const { error } = await supabase.from("flashcard_reviews").insert({
     flashcard_id: flashcardId,
+    user_id: user.id,
     quality: quality,
     ease_factor: easeFactor,
     interval: interval,
     repetitions: repetitions,
-    user_id: user.id
+    next_review: nextReview,
+    last_review: new Date().toISOString()
   });
+
+  if (error) {
+    console.error("[Flashcard Review] Insert failed:", error.message);
+    return { ok: false, message: error.message };
+  }
 
   revalidatePath("/flashcards");
   return { ok: true };

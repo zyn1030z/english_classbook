@@ -541,13 +541,18 @@ export async function reExtractVocabulary(lessonId: string, limit: number = 10, 
             difficulty: vocab.difficulty || 'medium'
           });
 
-          await supabase.from("flashcards").insert({
+          const { error: fcError } = await supabase.from("flashcards").insert({
             vocabulary_id: vRecord.id,
             user_id: userId,
             front: vocab.word,
             back: vocab.meaning,
             mode: "en_vi"
           });
+          if (fcError) {
+            console.error("[Re-extract] Flashcard insert failed:", fcError.message, "| vocab:", vocab.word);
+          }
+        } else if (vError) {
+          console.error("[Re-extract] Vocabulary insert failed:", vError.message, "| word:", vocab.word);
         }
       }
     }
