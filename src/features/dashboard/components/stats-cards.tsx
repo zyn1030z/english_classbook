@@ -1,12 +1,15 @@
 import { BookOpen, Flame, Mic2, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { learningMetrics } from "@/lib/utils/demo-data";
 import { cn } from "@/lib/utils/cn";
 
-const icons = [Trophy, BookOpen, Mic2, Flame];
+export interface StatsData {
+  lessonCount: number;
+  vocabCount: number;
+  flashcardDue: number;
+  streakDays: number;
+}
 
-// Define subtle accent color configurations for icons and badges
 const colorConfigs = [
   {
     iconClass: "text-amber-500 bg-amber-500/10 border-amber-500/20",
@@ -26,24 +29,29 @@ const colorConfigs = [
   }
 ];
 
-export function StatsCards() {
+export function StatsCards({ stats }: { stats: StatsData }) {
+  const metrics = [
+    { label: "Lessons", value: String(stats.lessonCount), trend: `${stats.lessonCount} total`, icon: Trophy },
+    { label: "Vocabulary", value: String(stats.vocabCount), trend: `${stats.flashcardDue} due today`, icon: BookOpen },
+    { label: "Flashcards Due", value: String(stats.flashcardDue), trend: "ready for review", icon: Mic2 },
+    { label: "Streak", value: String(stats.streakDays), trend: `${stats.streakDays} days`, icon: Flame },
+  ];
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {learningMetrics.map((metric, index) => {
-        const Icon = icons[index] ?? Trophy;
+      {metrics.map((metric, index) => {
+        const Icon = metric.icon;
         const colors = colorConfigs[index] ?? colorConfigs[0];
-        
+
         return (
-          <Card 
-            key={metric.label} 
+          <Card
+            key={metric.label}
             className="group relative overflow-hidden shadow-md dark:border-white/10 dark:bg-[#161616] hover:bg-card/90 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300"
           >
-            {/* Soft background glow on hover */}
             <div className={cn(
               "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none",
               colors.bgAccent
             )} />
-
             <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2.5">
               <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
                 {metric.label}
@@ -59,7 +67,7 @@ export function StatsCards() {
               <div className="text-2xl font-bold tracking-tight text-foreground">
                 {metric.value}
               </div>
-              <Badge className="mt-2 text-[10px] font-medium" tone={metric.tone}>
+              <Badge className="mt-2 text-[10px] font-medium" tone="green">
                 {metric.trend}
               </Badge>
             </CardContent>

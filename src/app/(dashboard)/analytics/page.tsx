@@ -2,17 +2,68 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { RetentionChart } from "@/features/analytics/components/retention-chart";
 import { WeeklyProgress } from "@/features/analytics/components/weekly-progress";
-import { weeklyProgress } from "@/lib/utils/demo-data";
+import type { WeeklyPoint } from "@/features/analytics/components/weekly-progress";
+import { createClient } from "@/lib/supabase/server";
+import { hasSupabaseConfig } from "@/lib/supabase/config";
 
-export default function AnalyticsPage() {
-  const totals = weeklyProgress.reduce(
-    (acc, item) => ({
-      vocabulary: acc.vocabulary + item.vocabulary,
-      lessons: acc.lessons + item.lessons,
-      speaking: acc.speaking + item.speaking
-    }),
-    { vocabulary: 0, lessons: 0, speaking: 0 }
-  );
+export default async function AnalyticsPage() {
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  let weeklyData: WeeklyPoint[] = days.map((d) => ({ day: d, vocabulary: 0, reviews: 0 }));
+  let totalVocab = 0;
+  let totalReviews = 0;
+
+  if (hasSupabaseConfig()) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
+      weekStart.setHours(0, 0, 0, 0);
+
+      const weekMap = new Map<string, { vocabulary: number; reviews: number }>();
+      days.forEach((d) => weekMap.set(d, { vocabulary: 0, reviews: 0 }));
+
+      const { data: weekVocab } = await supabase
+        .from("vocabularies")
+        .select("created_at")
+        .gte("created_at", weekStart.toISOString());
+
+      if (weekVocab) {
+        for (const v of weekVocab) {
+          const dayIdx = new Date(v.created_at).getDay();
+          const dayName = days[(dayIdx + 6) % 7];
+          const entry = weekMap.get(dayName);
+          if (entry) entry.vocabulary++;
+        }
+      }
+
+      const { data: weekReviews } = await supabase
+        .from("flashcard_reviews")
+        .select("last_review")
+        .eq("user_id", user.id)
+        .gte("last_review", weekStart.toISOString());
+
+      if (weekReviews) {
+        for (const r of weekReviews) {
+          if (!r.last_review) continue;
+          const dayIdx = new Date(r.last_review).getDay();
+          const dayName = days[(dayIdx + 6) % 7];
+          const entry = weekMap.get(dayName);
+          if (entry) entry.reviews++;
+        }
+      }
+
+      weeklyData = days.map((day) => ({
+        day,
+        vocabulary: weekMap.get(day)?.vocabulary ?? 0,
+        reviews: weekMap.get(day)?.reviews ?? 0,
+      }));
+
+      totalVocab = weeklyData.reduce((sum, d) => sum + d.vocabulary, 0);
+      totalReviews = weeklyData.reduce((sum, d) => sum + d.reviews, 0);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -23,29 +74,29 @@ export default function AnalyticsPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle>Vocabulary learned</CardTitle>
+            <CardTitle>Vocabulary added</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{totals.vocabulary}</p>
+            <p className="text-3xl font-semibold">{totalVocab}</p>
             <Badge className="mt-3" tone="green">this week</Badge>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Lessons completed</CardTitle>
+            <CardTitle>Flashcard reviews</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{totals.lessons}</p>
-            <Badge className="mt-3" tone="blue">steady pace</Badge>
+            <p className="text-3xl font-semibold">{totalReviews}</p>
+            <Badge className="mt-3" tone="blue">this week</Badge>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Speaking minutes</CardTitle>
+            <CardTitle>Total activity</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{totals.speaking}</p>
-            <Badge className="mt-3" tone="amber">fluency work</Badge>
+            <p className="text-3xl font-semibold">{totalVocab + totalReviews}</p>
+            <Badge className="mt-3" tone="amber">combined</Badge>
           </CardContent>
         </Card>
       </div>
@@ -53,10 +104,10 @@ export default function AnalyticsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Activity trend</CardTitle>
-            <CardDescription>Vocabulary and speaking minutes across the week.</CardDescription>
+            <CardDescription>Vocabulary and reviews across the week.</CardDescription>
           </CardHeader>
           <CardContent>
-            <WeeklyProgress />
+            <WeeklyProgress data={weeklyData} />
           </CardContent>
         </Card>
         <Card>

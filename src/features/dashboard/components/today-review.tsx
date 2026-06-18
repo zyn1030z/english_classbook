@@ -1,30 +1,43 @@
 import Link from "next/link";
-import { ArrowRight, Clock } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { flashcards } from "@/lib/utils/demo-data";
 
-export function TodayReview() {
-  const due = flashcards.filter((card) => new Date(card.nextReview) <= new Date());
+export interface ReviewCard {
+  id: string;
+  front: string;
+  interval: number;
+}
 
+export function TodayReview({ cards }: { cards: ReviewCard[] }) {
   return (
     <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md">
       <CardHeader>
         <CardTitle>Today&apos;s review</CardTitle>
-        <CardDescription>{due.length} cards are ready for spaced repetition.</CardDescription>
+        <CardDescription>{cards.length} cards are ready for spaced repetition.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-3">
-          {due.map((card) => (
-            <div key={card.id} className="flex items-center justify-between rounded-md border dark:border-white/10 dark:bg-black/20 p-3">
-              <div>
-                <p className="font-medium">{card.front}</p>
-                <p className="text-sm text-muted-foreground">Interval {card.interval} days</p>
+        {cards.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <CheckCircle2 className="h-8 w-8 text-emerald-500 mb-2" />
+            <p className="text-sm text-muted-foreground">All caught up! No cards due.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {cards.slice(0, 5).map((card) => (
+              <div key={card.id} className="flex items-center justify-between rounded-md border dark:border-white/10 dark:bg-black/20 p-3">
+                <div>
+                  <p className="font-medium">{card.front}</p>
+                  <p className="text-sm text-muted-foreground">Interval {card.interval} days</p>
+                </div>
+                <Clock className="h-4 w-4 text-muted-foreground" />
               </div>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </div>
-          ))}
-        </div>
+            ))}
+            {cards.length > 5 && (
+              <p className="text-xs text-center text-muted-foreground">+{cards.length - 5} more cards</p>
+            )}
+          </div>
+        )}
         <Button asChild className="w-full">
           <Link href="/flashcards">
             Start review
