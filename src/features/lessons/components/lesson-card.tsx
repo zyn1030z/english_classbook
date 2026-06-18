@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, useEffect, useRef } from "react";
-import { CalendarDays, FileText, MoreVertical, Trash2, Edit2, Loader2, Rocket, Wand2, Sparkles, Brain, BookOpen, Lightbulb } from "lucide-react";
+import { CalendarDays, FileText, MoreVertical, Trash2, Edit2, Loader2, Rocket, Wand2, Sparkles, Brain, BookOpen, Lightbulb, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -161,7 +161,10 @@ export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmi
             </div>
           </div>
         </CardHeader>
-        <CardContent className="flex-1 space-y-5">
+        <CardContent
+          className="flex-1 space-y-5 cursor-pointer"
+          onClick={() => router.push(`/lessons/${lesson.id}`)}
+        >
           {lesson.description && (
             <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground/90">{lesson.description}</p>
           )}
@@ -199,6 +202,11 @@ export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmi
               AI Extraction ready
             </div>
           )}
+
+          {/* View details hint */}
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-primary/0 group-hover:text-primary transition-all duration-300">
+            View details <ArrowRight className="w-3.5 h-3.5" />
+          </div>
         </CardContent>
 
         {/* Generating Overlay */}
