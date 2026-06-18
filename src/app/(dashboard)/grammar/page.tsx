@@ -24,16 +24,6 @@ export default async function GrammarPage() {
           .order("created_at", { ascending: false }),
       ]);
 
-      if (topicsRes.data) {
-        topics = topicsRes.data.map((t: any) => ({
-          id: t.id,
-          name: t.name,
-          level: t.level,
-          description: t.description || "",
-          parentId: t.parent_id || undefined,
-        }));
-      }
-
       if (notesRes.data) {
         notes = notesRes.data.map((n: any) => ({
           id: n.id,
@@ -46,6 +36,21 @@ export default async function GrammarPage() {
           examples: n.examples || [],
           notes: n.notes || "",
         }));
+      }
+
+      // Only include topics that have at least one note
+      const topicIdsWithNotes = new Set(notes.map((n) => n.topicId));
+
+      if (topicsRes.data) {
+        topics = topicsRes.data
+          .filter((t: any) => topicIdsWithNotes.has(t.id))
+          .map((t: any) => ({
+            id: t.id,
+            name: t.name,
+            level: t.level,
+            description: t.description || "",
+            parentId: t.parent_id || undefined,
+          }));
       }
     }
   }
