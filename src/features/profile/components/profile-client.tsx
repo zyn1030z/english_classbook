@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect, useRef } from "react";
+import { useTheme } from "next-themes";
 import {
   User, Mail, GraduationCap, Target, Calendar, BookOpen,
-  Brain, Sparkles, Save, Loader2, CheckCircle2, Flame
+  Brain, Sparkles, Save, Loader2, CheckCircle2, Flame,
+  Sun, Moon, Monitor, Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,11 +35,21 @@ const LEVELS = [
 ];
 
 export function ProfileClient({ profile }: { profile: ProfileData }) {
+  const { theme, setTheme } = useTheme();
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
   const [name, setName] = useState(profile.name);
   const [level, setLevel] = useState(profile.englishLevel);
   const [goal, setGoal] = useState(profile.learningGoal);
+  const [quizCount, setQuizCount] = useState(30);
+  const prefsRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to preferences section if hash is #preferences
+  useEffect(() => {
+    if (window.location.hash === "#preferences" && prefsRef.current) {
+      setTimeout(() => prefsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 200);
+    }
+  }, []);
 
   const handleSave = () => {
     const formData = new FormData();
@@ -211,6 +223,71 @@ export function ProfileClient({ profile }: { profile: ProfileData }) {
           </div>
         </CardContent>
       </Card>
+
+      {/* System Preferences */}
+      <div ref={prefsRef} id="preferences">
+        <Card className="border-black/5 dark:border-white/10 bg-white dark:bg-[#0f0f13] rounded-2xl">
+          <CardContent className="p-6 space-y-6">
+            <div className="flex items-center gap-2">
+              <Settings className="w-4 h-4 text-muted-foreground" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">System Preferences</h3>
+            </div>
+
+            {/* Theme */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Appearance</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { value: "light", label: "Light", icon: Sun },
+                  { value: "dark", label: "Dark", icon: Moon },
+                  { value: "system", label: "System", icon: Monitor },
+                ].map((t) => (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => setTheme(t.value)}
+                    className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer border-2 ${
+                      theme === t.value
+                        ? "border-primary bg-primary/5 dark:bg-primary/10 text-primary shadow-sm"
+                        : "border-transparent bg-black/[0.02] dark:bg-white/[0.03] text-muted-foreground hover:bg-black/[0.04] dark:hover:bg-white/[0.05]"
+                    }`}
+                  >
+                    <t.icon className="w-4 h-4" />
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Quiz Count */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Default Quiz Questions</label>
+              <p className="text-xs text-muted-foreground">Number of questions generated per quiz</p>
+              <div className="grid grid-cols-3 gap-2">
+                {[10, 20, 30].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setQuizCount(n)}
+                    className={`px-3 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer border-2 ${
+                      quizCount === n
+                        ? "border-primary bg-primary/5 dark:bg-primary/10 text-primary shadow-sm"
+                        : "border-transparent bg-black/[0.02] dark:bg-white/[0.03] text-muted-foreground hover:bg-black/[0.04] dark:hover:bg-white/[0.05]"
+                    }`}
+                  >
+                    {n} questions
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Keyboard Shortcuts hint */}
+            <div className="pt-2 border-t border-black/5 dark:border-white/5">
+              <p className="text-xs text-muted-foreground">💡 Tip: Use the moon/sun icon in the header bar for quick theme switching.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

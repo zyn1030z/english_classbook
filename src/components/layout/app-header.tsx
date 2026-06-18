@@ -178,7 +178,10 @@ export function AppHeader() {
                   <User className="h-3.5 w-3.5" />
                   <span>Profile Settings</span>
                 </button>
-                <button className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
+                <button
+                  onClick={() => { setIsProfileOpen(false); window.location.href = "/profile#preferences"; }}
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
+                >
                   <Settings className="h-3.5 w-3.5" />
                   <span>System Preferences</span>
                 </button>
