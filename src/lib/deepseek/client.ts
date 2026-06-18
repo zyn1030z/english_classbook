@@ -191,9 +191,9 @@ ${JSON.stringify(vocabularies, null, 2)}
 Ngữ pháp:
 ${JSON.stringify(grammarTopics, null, 2)}
 
-Nhiệm vụ của bạn: Hãy tạo ra một bài kiểm tra trắc nghiệm (Multiple choice quiz) gồm đúng 10 câu hỏi để kiểm tra kiến thức của học sinh dựa trên danh sách trên.
-- 5 câu hỏi về Từ vựng (điền từ vào chỗ trống, chọn từ đồng nghĩa, v.v.)
-- 5 câu hỏi về Ngữ pháp (chọn dạng đúng của động từ, sửa lỗi sai, v.v.)
+Nhiệm vụ của bạn: Hãy tạo ra một bài kiểm tra trắc nghiệm (Multiple choice quiz) gồm đúng 30 câu hỏi để kiểm tra kiến thức của học sinh dựa trên danh sách trên.
+- 20 câu hỏi về Từ vựng (chọn nghĩa đúng, điền từ vào chỗ trống, chọn từ đồng nghĩa/trái nghĩa, v.v.)
+- 10 câu hỏi về Ngữ pháp (chọn dạng đúng của động từ, sửa lỗi sai, điền từ, v.v.)
 Mỗi câu hỏi phải có ĐÚNG 4 lựa chọn (options) và 1 đáp án đúng (correctAnswer). Phải có giải thích bằng tiếng Việt (explanation).
 
 BẠN BẮT BUỘC PHẢI TRẢ VỀ MỘT ĐỐI TƯỢNG JSON TUÂN THỦ ĐÚNG SCHEMA SAU ĐÂY:
@@ -201,7 +201,7 @@ ${JSON.stringify(quizJsonSchema.schema, null, 2)}
   `;
 
   try {
-    console.log(`[DeepSeek] Calling model=deepseek-v4-flash | task=quiz | vocabs=${vocabularies.length} | grammar=${grammarTopics.length} | max_tokens=16384`);
+    console.log(`[DeepSeek] Calling model=deepseek-v4-flash | task=quiz | vocabs=${vocabularies.length} | grammar=${grammarTopics.length} | max_tokens=32768`);
     const response = await deepseek.chat.completions.create({
       model: "deepseek-v4-flash",
       messages: [
@@ -210,7 +210,7 @@ ${JSON.stringify(quizJsonSchema.schema, null, 2)}
       ],
       response_format: { type: "json_object" },
       temperature: 0.3,
-      max_tokens: 16384,
+      max_tokens: 32768,
     });
 
     const content = response.choices[0]?.message?.content;

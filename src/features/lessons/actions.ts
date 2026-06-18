@@ -317,13 +317,13 @@ export async function generateLessonQuiz(lessonId: string) {
     .from("vocabularies")
     .select("word, meaning, part_of_speech, category")
     .eq("lesson_id", lessonId)
-    .limit(10);
+    .limit(30);
 
   const { data: grammarNotes } = await supabase
     .from("grammar_notes")
     .select("title, explanation")
     .eq("lesson_id", lessonId)
-    .limit(3);
+    .limit(10);
 
   if (!vocabularies?.length && !grammarNotes?.length) {
     return { ok: false, message: "Bài học chưa có dữ liệu từ vựng/ngữ pháp để tạo đề thi." };
@@ -372,27 +372,44 @@ export async function generateLessonQuiz(lessonId: string) {
     return { ok: false, message: "Database error while saving quiz." };
   }
 
-  // Bulk process questions and answers
-  for (const q of quizData.questions) {
-    const { data: question, error: qError } = await supabase
-      .from("quiz_questions")
-      .insert({
-        quiz_id: quiz.id,
-        question_type: q.questionType,
-        content: q.content,
-        correct_answer: q.correctAnswer,
-        explanation: q.explanation
-      })
-      .select("id")
-      .single();
+  // Bulk insert all questions at once (1 round-trip instead of N)
+  const questionRows = quizData.questions.map((q: any) => ({
+    quiz_id: quiz.id,
+    question_type: q.questionType,
+    content: q.content,
+    correct_answer: q.correctAnswer,
+    explanation: q.explanation
+  }));
 
-    if (question && !qError) {
-      const answers = q.options.map((opt: string) => ({
-        question_id: question.id,
-        answer: opt,
-        is_correct: opt === q.correctAnswer
-      }));
-      await supabase.from("quiz_answers").insert(answers);
+  const { data: insertedQuestions, error: bulkQError } = await supabase
+    .from("quiz_questions")
+    .insert(questionRows)
+    .select("id, correct_answer");
+
+  if (bulkQError || !insertedQuestions) {
+    console.error("Bulk insert questions error:", bulkQError);
+    return { ok: false, message: "Failed to save quiz questions." };
+  }
+
+  // Bulk insert all answers at once (1 round-trip instead of N)
+  const allAnswers: { question_id: string; answer: string; is_correct: boolean }[] = [];
+  insertedQuestions.forEach((dbQ: any, idx: number) => {
+    const originalQ = quizData.questions[idx];
+    if (originalQ?.options) {
+      for (const opt of originalQ.options) {
+        allAnswers.push({
+          question_id: dbQ.id,
+          answer: opt,
+          is_correct: opt === originalQ.correctAnswer
+        });
+      }
+    }
+  });
+
+  if (allAnswers.length > 0) {
+    const { error: bulkAError } = await supabase.from("quiz_answers").insert(allAnswers);
+    if (bulkAError) {
+      console.error("Bulk insert answers error:", bulkAError);
     }
   }
 

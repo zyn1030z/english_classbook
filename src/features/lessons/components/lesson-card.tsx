@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { CalendarDays, FileText, MoreVertical, Trash2, Edit2, Loader2, Rocket, Wand2 } from "lucide-react";
+import { useState, useTransition, useEffect, useRef } from "react";
+import { CalendarDays, FileText, MoreVertical, Trash2, Edit2, Loader2, Rocket, Wand2, Sparkles, Brain, BookOpen, Lightbulb } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,38 @@ export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmi
       }
     });
   };
+
+  // --- Generating state animation ---
+  const TIPS = [
+    { icon: Brain, text: "AI đang phân tích từ vựng..." },
+    { icon: BookOpen, text: "Đang tạo câu hỏi ngữ pháp..." },
+    { icon: Lightbulb, text: "Đang sinh đáp án và giải thích..." },
+    { icon: Sparkles, text: "Đang hoàn thiện 30 câu quiz..." },
+    { icon: Wand2, text: "Sắp xong, chuẩn bị bài kiểm tra..." },
+  ];
+  const [genProgress, setGenProgress] = useState(0);
+  const [tipIndex, setTipIndex] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (isGenerating) {
+      setGenProgress(0);
+      setTipIndex(0);
+      const startTime = Date.now();
+      intervalRef.current = setInterval(() => {
+        const elapsed = (Date.now() - startTime) / 1000;
+        // Ease-out curve: fast start, slow end. Caps at 92%
+        const progress = Math.min(92, 100 * (1 - Math.exp(-elapsed / 12)));
+        setGenProgress(Math.round(progress));
+        setTipIndex(Math.min(TIPS.length - 1, Math.floor(elapsed / 5)));
+      }, 200);
+    } else {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      setGenProgress(0);
+    }
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isGenerating]);
 
   return (
     <>
@@ -165,6 +197,36 @@ export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmi
             </div>
           )}
         </CardContent>
+
+        {/* Generating Overlay */}
+        {isGenerating && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/95 dark:bg-[#0f0f13]/95 backdrop-blur-sm rounded-2xl animate-in fade-in duration-300">
+            {/* Pulsing icon */}
+            <div className="relative mb-6">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-xl shadow-blue-500/25 animate-pulse">
+                {(() => { const TipIcon = TIPS[tipIndex].icon; return <TipIcon className="w-7 h-7 text-white" />; })()}
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shadow-md animate-bounce" style={{ animationDuration: '2s' }}>
+                <Sparkles className="w-3 h-3 text-white" />
+              </div>
+            </div>
+
+            {/* Progress */}
+            <div className="w-3/4 max-w-[200px] mb-3">
+              <div className="h-2 bg-black/5 dark:bg-white/5 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${genProgress}%` }}
+                />
+              </div>
+            </div>
+
+            <p className="text-sm font-bold text-foreground mb-1">{genProgress}%</p>
+            <p className="text-[13px] text-muted-foreground font-medium animate-in fade-in duration-500" key={tipIndex}>
+              {TIPS[tipIndex].text}
+            </p>
+          </div>
+        )}
 
         <CardFooter className="pt-0 pb-5">
           <Button

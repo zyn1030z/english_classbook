@@ -175,9 +175,9 @@ ${JSON.stringify(vocabularies, null, 2)}
 Ngữ pháp:
 ${JSON.stringify(grammarTopics, null, 2)}
 
-Nhiệm vụ của bạn: Hãy tạo ra một bài kiểm tra trắc nghiệm (Multiple choice quiz) gồm đúng 10 câu hỏi để kiểm tra kiến thức của học sinh dựa trên danh sách trên.
-- 5 câu hỏi về Từ vựng (điền từ vào chỗ trống, chọn từ đồng nghĩa, v.v.)
-- 5 câu hỏi về Ngữ pháp (chọn dạng đúng của động từ, sửa lỗi sai, v.v.)
+Nhiệm vụ của bạn: Hãy tạo ra một bài kiểm tra trắc nghiệm (Multiple choice quiz) gồm đúng 30 câu hỏi để kiểm tra kiến thức của học sinh dựa trên danh sách trên.
+- 20 câu hỏi về Từ vựng (chọn nghĩa đúng, điền từ vào chỗ trống, chọn từ đồng nghĩa/trái nghĩa, v.v.)
+- 10 câu hỏi về Ngữ pháp (chọn dạng đúng của động từ, sửa lỗi sai, điền từ, v.v.)
 Mỗi câu hỏi phải có ĐÚNG 4 lựa chọn (options) và 1 đáp án đúng (correctAnswer). Phải có giải thích bằng tiếng Việt (explanation).
   `;
 
@@ -189,7 +189,7 @@ Mỗi câu hỏi phải có ĐÚNG 4 lựa chọn (options) và 1 đáp án đú
         responseMimeType: "application/json",
         responseSchema: quizGenerationSchema,
         temperature: 0.3,
-        maxOutputTokens: 65536,
+        maxOutputTokens: 131072,
       }
     });
 

@@ -1,5 +1,5 @@
-import { useState, useTransition, useEffect } from "react";
-import { Edit2, Loader2, Save, FileUp } from "lucide-react";
+import { useState, useTransition, useEffect, useRef } from "react";
+import { Edit2, Loader2, Save, FileUp, Brain, BookOpen, Lightbulb, Sparkles, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -78,16 +78,73 @@ export function EditLessonSheet({ lesson, open, onOpenChange }: { lesson: Lesson
     });
   };
 
+  // --- Extracting overlay animation ---
+  const EXTRACT_TIPS = [
+    { icon: Brain, text: "AI đang đọc tài liệu..." },
+    { icon: BookOpen, text: "Đang phân tích từ vựng..." },
+    { icon: Lightbulb, text: "Đang tìm ngữ pháp quan trọng..." },
+    { icon: Sparkles, text: "Đang tổng hợp kết quả..." },
+    { icon: Wand2, text: "Sắp xong, đang lưu dữ liệu..." },
+  ];
+  const [extractProgress, setExtractProgress] = useState(0);
+  const [extractTipIndex, setExtractTipIndex] = useState(0);
+  const extractIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (isExtracting) {
+      setExtractProgress(0);
+      setExtractTipIndex(0);
+      const startTime = Date.now();
+      extractIntervalRef.current = setInterval(() => {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const progress = Math.min(92, 100 * (1 - Math.exp(-elapsed / 15)));
+        setExtractProgress(Math.round(progress));
+        setExtractTipIndex(Math.min(EXTRACT_TIPS.length - 1, Math.floor(elapsed / 6)));
+      }, 200);
+    } else {
+      if (extractIntervalRef.current) clearInterval(extractIntervalRef.current);
+      setExtractProgress(0);
+    }
+    return () => { if (extractIntervalRef.current) clearInterval(extractIntervalRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isExtracting]);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       
       <SheetContent 
         className="sm:max-w-[450px] overflow-y-auto"
         onInteractOutside={(e) => {
-          // Ngăn Sheet tự đóng khi mất focus (do mở hộp thoại chọn file của OS)
           e.preventDefault();
         }}
       >
+        {/* Extracting Overlay */}
+        {isExtracting && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/95 dark:bg-[#0c0c14]/95 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="relative mb-8">
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-2xl shadow-blue-500/30 animate-pulse">
+                {(() => { const TipIcon = EXTRACT_TIPS[extractTipIndex].icon; return <TipIcon className="w-9 h-9 text-white" />; })()}
+              </div>
+              <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg animate-bounce" style={{ animationDuration: '2s' }}>
+                <Sparkles className="w-3.5 h-3.5 text-white" />
+              </div>
+            </div>
+
+            <div className="w-48 mb-4">
+              <div className="h-2.5 bg-black/5 dark:bg-white/5 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${extractProgress}%` }}
+                />
+              </div>
+            </div>
+
+            <p className="text-lg font-bold text-foreground mb-1">{extractProgress}%</p>
+            <p className="text-sm text-muted-foreground font-medium animate-in fade-in duration-500 text-center px-8" key={extractTipIndex}>
+              {EXTRACT_TIPS[extractTipIndex].text}
+            </p>
+          </div>
+        )}
         <SheetHeader className="pb-6">
           <SheetTitle>Edit Lesson</SheetTitle>
           <SheetDescription>
