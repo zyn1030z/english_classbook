@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { VocabularyDetail } from "@/features/vocabulary/components/vocabulary-detail";
 import type { Difficulty, Vocabulary } from "@/types";
 
 const difficultyTone: Record<Difficulty, "green" | "amber" | "red"> = {
@@ -29,6 +30,7 @@ export function VocabularyTable({
   const [difficulty, setDifficulty] = React.useState("all");
   const [selectedLessonId, setSelectedLessonId] = React.useState("all");
   const [currentPage, setCurrentPage] = React.useState(1);
+  const [selectedVocab, setSelectedVocab] = React.useState<Vocabulary | null>(null);
   const itemsPerPage = 10;
 
   const availableLessons = React.useMemo(() => {
@@ -63,6 +65,7 @@ export function VocabularyTable({
   }
 
   return (
+    <>
     <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md transition-colors">
       <CardHeader>
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -114,7 +117,7 @@ export function VocabularyTable({
             <TableBody>
               {currentItems.length > 0 ? (
                 currentItems.map((item) => (
-                  <TableRow key={item.id} className="align-top">
+                  <TableRow key={item.id} className="align-top cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setSelectedVocab(item)}>
                     <TableCell>
                       <div className="font-medium">{item.word}</div>
                       <div className="font-mono text-xs text-muted-foreground">{item.ipa}</div>
@@ -201,5 +204,11 @@ export function VocabularyTable({
           )}
       </CardContent>
     </Card>
+      <VocabularyDetail
+        vocab={selectedVocab}
+        open={!!selectedVocab}
+        onClose={() => setSelectedVocab(null)}
+      />
+    </>
   );
 }
