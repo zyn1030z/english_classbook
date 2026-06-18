@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useFormStatus } from "react-dom";
-import { ChevronDown, FileUp, Plus, Sparkles } from "lucide-react";
+import { ChevronDown, FileUp, Plus, Sparkles, Brain, BookOpen, Lightbulb, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,25 +10,43 @@ import { Textarea } from "@/components/ui/textarea";
 import { createLesson } from "@/features/lessons/actions";
 import { cn } from "@/lib/utils/cn";
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending} className="gap-2 font-medium">
-      {pending ? (
-        <Sparkles className="h-4 w-4 animate-spin" />
-      ) : (
-        <Plus className="h-4 w-4" />
-      )}
-      {pending ? "Creating..." : "Create lesson"}
-    </Button>
-  );
-}
+const CREATE_TIPS = [
+  { icon: Brain, text: "Đang tạo bài học mới..." },
+  { icon: BookOpen, text: "AI đang đọc tài liệu..." },
+  { icon: Lightbulb, text: "Đang trích xuất từ vựng..." },
+  { icon: Sparkles, text: "Đang phân tích ngữ pháp..." },
+  { icon: Wand2, text: "Sắp xong, đang lưu dữ liệu..." },
+];
 
 export function LessonForm() {
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [vocabLimit, setVocabLimit] = React.useState(10);
   const [isExpanded, setIsExpanded] = React.useState(false);
+  const [isCreating, startCreating] = React.useTransition();
   const formRef = React.useRef<HTMLFormElement>(null);
+
+  // --- Creating overlay animation ---
+  const [createProgress, setCreateProgress] = React.useState(0);
+  const [tipIndex, setTipIndex] = React.useState(0);
+  const intervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
+  React.useEffect(() => {
+    if (isCreating) {
+      setCreateProgress(0);
+      setTipIndex(0);
+      const startTime = Date.now();
+      intervalRef.current = setInterval(() => {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const progress = Math.min(92, 100 * (1 - Math.exp(-elapsed / 12)));
+        setCreateProgress(Math.round(progress));
+        setTipIndex(Math.min(CREATE_TIPS.length - 1, Math.floor(elapsed / 5)));
+      }, 200);
+    } else {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      setCreateProgress(0);
+    }
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [isCreating]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -37,17 +54,48 @@ export function LessonForm() {
     }
   };
 
-  const handleFormSubmit = () => {
-    setTimeout(() => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startCreating(async () => {
+      await createLesson(formData);
       setSelectedFile(null);
       setVocabLimit(10);
       formRef.current?.reset();
       setIsExpanded(false);
-    }, 100);
+    });
   };
 
   return (
-    <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md overflow-hidden transition-all duration-300">
+    <Card className="relative dark:border-white/10 dark:bg-[#161616] shadow-md overflow-hidden transition-all duration-300">
+      {/* Creating Overlay */}
+      {isCreating && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/95 dark:bg-[#161616]/95 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="relative mb-6">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-xl shadow-blue-500/25 animate-pulse">
+              {(() => { const TipIcon = CREATE_TIPS[tipIndex].icon; return <TipIcon className="w-7 h-7 text-white" />; })()}
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shadow-md animate-bounce" style={{ animationDuration: '2s' }}>
+              <Sparkles className="w-3 h-3 text-white" />
+            </div>
+          </div>
+
+          <div className="w-3/4 max-w-[200px] mb-3">
+            <div className="h-2 bg-black/5 dark:bg-white/5 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${createProgress}%` }}
+              />
+            </div>
+          </div>
+
+          <p className="text-sm font-bold text-foreground mb-1">{createProgress}%</p>
+          <p className="text-[13px] text-muted-foreground font-medium animate-in fade-in duration-500" key={tipIndex}>
+            {CREATE_TIPS[tipIndex].text}
+          </p>
+        </div>
+      )}
+
       {/* Collapsible header */}
       <button
         type="button"
@@ -78,8 +126,7 @@ export function LessonForm() {
           <CardContent className="pt-0 pb-5">
             <form
               ref={formRef}
-              action={async (formData: FormData) => { await createLesson(formData); }}
-              onSubmit={handleFormSubmit}
+              onSubmit={handleSubmit}
               className="space-y-4"
             >
               <div className="grid gap-4 md:grid-cols-2">
@@ -135,7 +182,14 @@ export function LessonForm() {
                   <span className="truncate">{selectedFile ? selectedFile.name : "Upload file"}</span>
                 </Button>
 
-                <SubmitButton />
+                <Button type="submit" disabled={isCreating} className="gap-2 font-medium">
+                  {isCreating ? (
+                    <Sparkles className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                  {isCreating ? "Creating..." : "Create lesson"}
+                </Button>
               </div>
             </form>
           </CardContent>
