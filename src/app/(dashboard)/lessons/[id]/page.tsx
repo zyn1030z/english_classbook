@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { LessonDetailClient } from "@/features/lessons/components/lesson-detail-client";
+import { getQuizHistory } from "@/features/lessons/actions";
 
 export default async function LessonDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
@@ -45,6 +46,9 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
     .eq("quiz_type", "lesson_review")
     .maybeSingle();
 
+  // Fetch quiz history
+  const quizHistory = await getQuizHistory(lessonId);
+
   return (
     <LessonDetailClient
       lesson={{
@@ -58,6 +62,7 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
       }))}
       lessonFile={lessonFile}
       quizInfo={quiz ? { id: quiz.id, questionCount: quiz.quiz_questions?.length || 0, createdAt: quiz.created_at } : null}
+      quizHistory={quizHistory}
     />
   );
 }

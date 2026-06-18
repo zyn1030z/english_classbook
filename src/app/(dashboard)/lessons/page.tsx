@@ -24,6 +24,19 @@ export default async function LessonsPage() {
         .order("created_at", { ascending: false });
 
       if (dbLessons) {
+        // Fetch learned counts per lesson
+        const { data: learnedVocab } = await supabase
+          .from("vocabularies")
+          .select("lesson_id")
+          .eq("is_learned", true);
+
+        const learnedMap = new Map<string, number>();
+        if (learnedVocab) {
+          for (const v of learnedVocab) {
+            learnedMap.set(v.lesson_id, (learnedMap.get(v.lesson_id) || 0) + 1);
+          }
+        }
+
         activeLessons = dbLessons.map((l: any) => ({
           id: l.id,
           userId: l.user_id,
@@ -33,7 +46,8 @@ export default async function LessonsPage() {
           tags: l.tags || [],
           status: l.status,
           vocabularyCount: l.vocabularies?.[0]?.count || 0,
-          grammarCount: l.grammar_notes?.[0]?.count || 0
+          grammarCount: l.grammar_notes?.[0]?.count || 0,
+          learnedCount: learnedMap.get(l.id) || 0,
         }));
       }
     }

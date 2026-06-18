@@ -814,3 +814,54 @@ export async function uploadLessonFileAndExtract(lessonId: string, formData: For
     return { ok: false, message: "Lỗi trong quá trình xử lý: " + err.message };
   }
 }
+
+// ──────────────────────────────────────────────
+// Quiz Attempt tracking
+// ──────────────────────────────────────────────
+
+export async function saveQuizAttempt(
+  quizId: string,
+  lessonId: string,
+  score: number,
+  totalQuestions: number,
+  timeSeconds: number
+) {
+  if (!hasSupabaseConfig()) return { ok: false, message: "No Supabase config" };
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Not authenticated" };
+
+  const { error } = await supabase.from("quiz_attempts").insert({
+    user_id: user.id,
+    quiz_id: quizId,
+    lesson_id: lessonId,
+    score,
+    total_questions: totalQuestions,
+    time_seconds: timeSeconds,
+  });
+
+  if (error) {
+    console.error("Save quiz attempt error:", error);
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath(`/lessons/${lessonId}`);
+  return { ok: true };
+}
+
+export async function getQuizHistory(lessonId: string) {
+  if (!hasSupabaseConfig()) return [];
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data } = await supabase
+    .from("quiz_attempts")
+    .select("id, score, total_questions, time_seconds, created_at")
+    .eq("lesson_id", lessonId)
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  return data || [];
+}

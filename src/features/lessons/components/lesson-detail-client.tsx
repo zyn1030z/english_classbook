@@ -6,7 +6,7 @@ import Link from "next/link";
 import {
   ArrowLeft, BookOpen, Brain, ChevronDown, ChevronRight,
   FileText, Layers, Loader2, Search, Sparkles, Star,
-  Volume2, Wand2, CheckCircle2, XCircle, Paperclip
+  Volume2, Wand2, CheckCircle2, XCircle, Paperclip, Clock, Trophy
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,14 @@ type QuizInfo = {
   createdAt: string;
 } | null;
 
+type QuizAttempt = {
+  id: string;
+  score: number;
+  total_questions: number;
+  time_seconds: number | null;
+  created_at: string;
+};
+
 type Props = {
   lesson: {
     id: string;
@@ -60,9 +68,10 @@ type Props = {
   grammarNotes: GrammarItem[];
   lessonFile: LessonFile;
   quizInfo: QuizInfo;
+  quizHistory: QuizAttempt[];
 };
 
-export function LessonDetailClient({ lesson, vocabularies, grammarNotes, lessonFile, quizInfo }: Props) {
+export function LessonDetailClient({ lesson, vocabularies, grammarNotes, lessonFile, quizInfo, quizHistory }: Props) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"vocab" | "grammar">("vocab");
   const [searchQuery, setSearchQuery] = useState("");
@@ -269,7 +278,22 @@ export function LessonDetailClient({ lesson, vocabularies, grammarNotes, lessonF
                     className="grid grid-cols-[1fr_1fr_100px_80px] sm:grid-cols-[1fr_1fr_120px_100px_80px] gap-3 px-4 py-3.5 items-center hover:bg-black/[0.01] dark:hover:bg-white/[0.01] transition-colors"
                   >
                     <div className="min-w-0">
-                      <p className="font-semibold text-sm text-foreground truncate">{v.word}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-semibold text-sm text-foreground truncate">{v.word}</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const utterance = new SpeechSynthesisUtterance(v.word);
+                            utterance.lang = "en-US";
+                            utterance.rate = 0.85;
+                            speechSynthesis.speak(utterance);
+                          }}
+                          className="flex-shrink-0 p-0.5 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                          title="Pronounce"
+                        >
+                          <Volume2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                       {v.ipa && <p className="text-xs text-muted-foreground font-mono">{v.ipa}</p>}
                     </div>
                     <div className="min-w-0">
@@ -361,6 +385,65 @@ export function LessonDetailClient({ lesson, vocabularies, grammarNotes, lessonF
               </Card>
             ))
           )}
+        </div>
+      )}
+
+      {/* Quiz History */}
+      {quizHistory.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <Trophy className="w-4 h-4" />
+              Quiz History
+            </h3>
+            {quizHistory.length > 0 && (() => {
+              const best = Math.max(...quizHistory.map(a => Math.round((a.score / a.total_questions) * 100)));
+              return (
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${
+                  best >= 90 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
+                    : best >= 70 ? "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
+                    : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
+                }`}>
+                  Best: {best}%
+                </span>
+              );
+            })()}
+          </div>
+          <div className="rounded-2xl border border-black/5 dark:border-white/10 overflow-hidden bg-white dark:bg-[#0f0f13]">
+            <div className="grid grid-cols-[1fr_100px_80px] sm:grid-cols-[1fr_120px_100px_80px] gap-3 px-4 py-3 bg-black/[0.02] dark:bg-white/[0.02] border-b border-black/5 dark:border-white/5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              <span>Date</span>
+              <span className="hidden sm:block">Score</span>
+              <span>Result</span>
+              <span className="text-right">Time</span>
+            </div>
+            <div className="divide-y divide-black/5 dark:divide-white/5">
+              {quizHistory.map((a) => {
+                const pct = Math.round((a.score / a.total_questions) * 100);
+                const mins = a.time_seconds ? Math.floor(a.time_seconds / 60) : 0;
+                const secs = a.time_seconds ? a.time_seconds % 60 : 0;
+                return (
+                  <div key={a.id} className="grid grid-cols-[1fr_100px_80px] sm:grid-cols-[1fr_120px_100px_80px] gap-3 px-4 py-3 items-center">
+                    <span className="text-sm text-foreground">
+                      {new Date(a.created_at).toLocaleDateString("vi-VN", { day: "numeric", month: "short", year: "numeric" })}
+                    </span>
+                    <span className="text-sm font-semibold text-foreground hidden sm:block">{a.score}/{a.total_questions}</span>
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md w-fit ${
+                      pct >= 90 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
+                        : pct >= 70 ? "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
+                        : pct >= 50 ? "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
+                        : "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400"
+                    }`}>
+                      {pct}%
+                    </span>
+                    <span className="text-xs text-muted-foreground text-right flex items-center justify-end gap-1">
+                      <Clock className="w-3 h-3" />
+                      {mins}m {secs}s
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
     </div>

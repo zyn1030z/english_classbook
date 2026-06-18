@@ -23,6 +23,7 @@ export interface Lesson {
   status: LessonStatus;
   vocabularyCount: number;
   grammarCount: number;
+  learnedCount: number;
 }
 
 export interface Vocabulary {

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Check, X, ArrowRight, Flag, RefreshCcw, Trophy, Zap, ChevronLeft } from "lucide-react";
+import { Check, X, ArrowRight, Flag, RefreshCcw, Trophy, Zap, ChevronLeft, Clock } from "lucide-react";
 import confetti from "canvas-confetti";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { saveQuizAttempt } from "@/features/lessons/actions";
 
 type QuizOption = {
   id: string;
@@ -38,12 +39,25 @@ export function QuizClient({
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [isChecked, setIsChecked] = useState(false);
   const [score, setScore] = useState(0);
+  const [hasSaved, setHasSaved] = useState(false);
+  const startTimeRef = useRef(Date.now());
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const isFinished = currentIndex >= questions.length;
   const currentQuestion = questions[currentIndex];
 
   useEffect(() => {
     if (isFinished) {
+      // Calculate elapsed time
+      const elapsed = Math.round((Date.now() - startTimeRef.current) / 1000);
+      setElapsedSeconds(elapsed);
+
+      // Save attempt (only once)
+      if (!hasSaved) {
+        setHasSaved(true);
+        saveQuizAttempt(quizId, lessonId, score, questions.length, elapsed).catch(console.error);
+      }
+
       const duration = 3 * 1000;
       const end = Date.now() + duration;
 
@@ -69,6 +83,7 @@ export function QuizClient({
       };
       frame();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFinished]);
 
   const handleCheck = () => {
@@ -132,6 +147,12 @@ export function QuizClient({
           </div>
         </div>
 
+        {/* Time elapsed */}
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Clock className="w-4 h-4" />
+          <span>{Math.floor(elapsedSeconds / 60)}m {elapsedSeconds % 60}s</span>
+        </div>
+
         <div className="flex gap-3 pt-4">
           <Button 
             size="lg" 
@@ -149,6 +170,8 @@ export function QuizClient({
               setScore(0);
               setIsChecked(false);
               setSelectedOptionId(null);
+              setHasSaved(false);
+              startTimeRef.current = Date.now();
             }}
           >
             <RefreshCcw className="w-4 h-4 mr-2" /> Play Again

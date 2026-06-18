@@ -6,6 +6,7 @@ import { TodayReview } from "@/features/dashboard/components/today-review";
 import { WeeklyProgress } from "@/features/analytics/components/weekly-progress";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/config";
+import { calculateStreak } from "@/features/streak/actions";
 import type { StatsData } from "@/features/dashboard/components/stats-cards";
 import type { ReviewCard } from "@/features/dashboard/components/today-review";
 import type { RecentLesson } from "@/features/dashboard/components/recent-lessons";
@@ -31,27 +32,19 @@ export default async function DashboardPage() {
         .single();
       userName = profile?.name || user.user_metadata?.name || user.email?.split("@")[0] || "User";
 
-      // Stats: counts (shared data)
-      const [lessonsRes, vocabRes, flashcardsRes] = await Promise.all([
+      // Stats: counts + real streak
+      const [lessonsRes, vocabRes, dueRes, streak] = await Promise.all([
         supabase.from("lessons").select("id", { count: "exact", head: true }),
         supabase.from("vocabularies").select("id", { count: "exact", head: true }),
-        supabase
-          .from("flashcards")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id),
+        supabase.from("flashcards").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        calculateStreak(user.id),
       ]);
-
-      // Flashcards due (personal)
-      const { count: dueCount } = await supabase
-        .from("flashcards")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id);
 
       stats = {
         lessonCount: lessonsRes.count ?? 0,
         vocabCount: vocabRes.count ?? 0,
-        flashcardDue: dueCount ?? 0,
-        streakDays: 0,
+        flashcardDue: dueRes.count ?? 0,
+        streakDays: streak,
       };
 
       // Today's review cards (personal flashcards with review data)

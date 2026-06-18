@@ -1,12 +1,12 @@
 "use client";
 
-import { Bell, ChevronRight, Menu, Moon, Search, Sun, User, LogOut, Settings } from "lucide-react";
+import { Bell, ChevronRight, Menu, Moon, Sun, User, LogOut, Settings } from "lucide-react";
 import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
 import * as React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { SearchCommand } from "@/components/layout/search-command";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { demoUser } from "@/lib/utils/demo-data";
 import { cn } from "@/lib/utils/cn";
@@ -128,11 +128,8 @@ export function AppHeader() {
 
       {/* Right side: Search, Theme Toggle, Notification & Profile */}
       <div className="flex items-center gap-3">
-        {/* Search Input */}
-        <div className="relative hidden min-w-0 md:block md:w-60 lg:w-72">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
-          <Input className="h-9 pl-9 pr-4 text-xs bg-muted/30 border-border/60 hover:bg-muted/50 focus:bg-background transition-all" placeholder="Search lessons, words, grammar..." />
-        </div>
+        {/* Search */}
+        <SearchCommand />
 
         {/* Action Buttons */}
         <div className="flex items-center gap-1.5">

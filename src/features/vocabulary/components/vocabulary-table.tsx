@@ -139,14 +139,14 @@ export function VocabularyTable({
                     <TableCell className="max-w-xs text-muted-foreground">{item.examples[0]?.sentence}</TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="icon" aria-label={`Pronounce ${item.word}`} onClick={() => speak(item.word)}>
+                        <Button variant="outline" size="icon" aria-label={`Pronounce ${item.word}`} onClick={(e) => { e.stopPropagation(); speak(item.word); }}>
                           <Volume2 className="h-4 w-4" />
                         </Button>
                         <Button
                           variant={item.isFavorite ? "secondary" : "outline"}
                           size="icon"
                           aria-label="Toggle favorite"
-                          onClick={() => onToggleFavorite(item.id)}
+                          onClick={(e) => { e.stopPropagation(); onToggleFavorite(item.id); }}
                           className={item.isFavorite ? "bg-amber-500/20 border-amber-500/50 text-amber-500 hover:bg-amber-500/30" : ""}
                         >
                           <Star className={`h-4 w-4 transition-colors ${item.isFavorite ? "fill-amber-500 text-amber-500" : ""}`} />
@@ -155,7 +155,7 @@ export function VocabularyTable({
                           variant={item.isLearned ? "secondary" : "outline"}
                           size="icon"
                           aria-label="Toggle learned"
-                          onClick={() => onToggleLearned(item.id)}
+                          onClick={(e) => { e.stopPropagation(); onToggleLearned(item.id); }}
                           className={item.isLearned ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-500 hover:bg-emerald-500/30" : ""}
                         >
                           <Check className={`h-4 w-4 transition-colors ${item.isLearned ? "text-emerald-500" : ""}`} />

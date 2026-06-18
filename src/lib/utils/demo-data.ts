@@ -28,7 +28,8 @@ export const lessons: Lesson[] = [
     tags: ["business", "speaking"],
     status: "published",
     vocabularyCount: 18,
-    grammarCount: 3
+    grammarCount: 3,
+    learnedCount: 8,
   },
   {
     id: "lesson-2",
@@ -39,7 +40,8 @@ export const lessons: Lesson[] = [
     tags: ["grammar", "work"],
     status: "published",
     vocabularyCount: 12,
-    grammarCount: 4
+    grammarCount: 4,
+    learnedCount: 5,
   },
   {
     id: "lesson-3",
@@ -50,7 +52,8 @@ export const lessons: Lesson[] = [
     tags: ["travel", "roleplay"],
     status: "draft",
     vocabularyCount: 21,
-    grammarCount: 2
+    grammarCount: 2,
+    learnedCount: 0,
   }
 ];
 

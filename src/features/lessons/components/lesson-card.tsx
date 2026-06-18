@@ -177,7 +177,7 @@ export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmi
             ))}
           </div>
           
-          <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-3 gap-3 text-sm">
             <div className="flex flex-col items-center justify-center rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] p-4 ring-1 ring-inset ring-black/5 dark:ring-white/10 transition-all duration-300 group-hover:bg-primary/5 group-hover:ring-primary/20">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Vocabulary</p>
               <p className="mt-1 text-3xl font-bold tracking-tight text-foreground">{lesson.vocabularyCount}</p>
@@ -185,6 +185,9 @@ export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmi
             <div className="flex flex-col items-center justify-center rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] p-4 ring-1 ring-inset ring-black/5 dark:ring-white/10 transition-all duration-300 group-hover:bg-primary/5 group-hover:ring-primary/20">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Grammar</p>
               <p className="mt-1 text-3xl font-bold tracking-tight text-foreground">{lesson.grammarCount}</p>
+            </div>
+            <div className="flex flex-col items-center justify-center rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] p-3 ring-1 ring-inset ring-black/5 dark:ring-white/10 transition-all duration-300 group-hover:bg-emerald-500/5 group-hover:ring-emerald-500/20">
+              <ProgressRing learned={lesson.learnedCount} total={lesson.vocabularyCount} />
             </div>
           </div>
           
@@ -278,5 +281,38 @@ export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmi
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+}
+
+function ProgressRing({ learned, total }: { learned: number; total: number }) {
+  const pct = total > 0 ? Math.round((learned / total) * 100) : 0;
+  const r = 22;
+  const circumference = 2 * Math.PI * r;
+  const offset = circumference * (1 - pct / 100);
+
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <div className="relative w-14 h-14 flex items-center justify-center">
+        <svg className="w-full h-full -rotate-90" viewBox="0 0 56 56">
+          <circle cx="28" cy="28" r={r} fill="none" stroke="currentColor" strokeWidth="4" className="text-black/5 dark:text-white/5" />
+          <circle
+            cx="28" cy="28" r={r} fill="none"
+            stroke={pct > 0 ? "url(#progressGrad)" : "none"}
+            strokeWidth="4" strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            style={{ transition: "stroke-dashoffset 0.6s ease-out" }}
+          />
+          <defs>
+            <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#10b981" />
+              <stop offset="100%" stopColor="#059669" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <span className="absolute text-xs font-bold text-foreground">{pct}%</span>
+      </div>
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Learned</p>
+    </div>
   );
 }
