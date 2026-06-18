@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { CalendarDays, FileText, MoreVertical, Trash2, Edit2, Loader2, Rocket, Wand2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -61,7 +61,7 @@ export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmi
 
   return (
     <>
-      <Card className="group relative overflow-hidden transition-all duration-300 shadow-md dark:border-white/10 dark:bg-[#161616] hover:-translate-y-1 hover:shadow-xl hover:border-primary/30 dark:hover:border-primary/40">
+      <Card className="group relative flex flex-col overflow-hidden transition-all duration-300 shadow-sm border border-black/5 dark:border-white/10 bg-white dark:bg-[#0f0f13] hover:-translate-y-1 hover:shadow-xl hover:border-primary/20 dark:hover:border-primary/30 rounded-2xl">
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-3">
@@ -88,7 +88,7 @@ export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmi
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg">
-                  {lesson.status === "draft" ? (
+                  {lesson.status === "draft" && (
                     <DropdownMenuItem 
                       onClick={(e) => {
                         e.preventDefault();
@@ -99,18 +99,6 @@ export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmi
                     >
                       {isPublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
                       {isPublishing ? "Publishing..." : "Publish Lesson"}
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem 
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleGenerateQuiz();
-                      }}
-                      className="gap-2 cursor-pointer text-primary focus:text-primary focus:bg-primary/5 font-medium"
-                      disabled={isGenerating}
-                    >
-                      {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                      {isGenerating ? "AI is generating..." : "Generate & Play Quiz"}
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
@@ -138,7 +126,7 @@ export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmi
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-5">
+        <CardContent className="flex-1 space-y-5">
           {lesson.description && (
             <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground/90">{lesson.description}</p>
           )}
@@ -152,18 +140,18 @@ export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmi
           </div>
           
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="flex flex-col items-center justify-center rounded-xl bg-gradient-to-b from-muted/50 to-muted/80 p-3 shadow-inner ring-1 ring-inset ring-foreground/5 transition-colors group-hover:from-primary/5 group-hover:to-primary/10 group-hover:ring-primary/10">
-              <p className="text-xs font-medium text-muted-foreground">Vocabulary</p>
-              <p className="mt-1 text-2xl font-bold tracking-tight text-foreground/90">{lesson.vocabularyCount}</p>
+            <div className="flex flex-col items-center justify-center rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] p-4 ring-1 ring-inset ring-black/5 dark:ring-white/10 transition-all duration-300 group-hover:bg-primary/5 group-hover:ring-primary/20">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Vocabulary</p>
+              <p className="mt-1 text-3xl font-bold tracking-tight text-foreground">{lesson.vocabularyCount}</p>
             </div>
-            <div className="flex flex-col items-center justify-center rounded-xl bg-gradient-to-b from-muted/50 to-muted/80 p-3 shadow-inner ring-1 ring-inset ring-foreground/5 transition-colors group-hover:from-primary/5 group-hover:to-primary/10 group-hover:ring-primary/10">
-              <p className="text-xs font-medium text-muted-foreground">Grammar</p>
-              <p className="mt-1 text-2xl font-bold tracking-tight text-foreground/90">{lesson.grammarCount}</p>
+            <div className="flex flex-col items-center justify-center rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] p-4 ring-1 ring-inset ring-black/5 dark:ring-white/10 transition-all duration-300 group-hover:bg-primary/5 group-hover:ring-primary/20">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Grammar</p>
+              <p className="mt-1 text-3xl font-bold tracking-tight text-foreground">{lesson.grammarCount}</p>
             </div>
           </div>
           
           {lesson.status === "draft" ? (
-            <div className="flex items-center gap-2 text-xs font-medium text-amber-600 dark:text-amber-400">
+            <div className="flex items-center gap-2 text-[13px] font-medium text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-500/10 px-3 py-2 rounded-lg">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
@@ -171,12 +159,23 @@ export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmi
               Draft Mode (Publish to activate Quiz)
             </div>
           ) : (
-            <div className="flex items-center gap-2 text-xs font-medium text-green-600/80 dark:text-green-400/80">
-              <FileText className="h-3.5 w-3.5" />
+            <div className="flex items-center gap-2 text-[13px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-2 rounded-lg">
+              <FileText className="h-4 w-4" />
               AI Extraction ready
             </div>
           )}
         </CardContent>
+
+        <CardFooter className="pt-0 pb-5">
+          <Button
+            onClick={handleGenerateQuiz}
+            disabled={isGenerating || lesson.status === "draft"}
+            className="w-full h-11 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all duration-300 font-semibold gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+            {isGenerating ? "AI is generating..." : "Generate & Play Quiz"}
+          </Button>
+        </CardFooter>
       </Card>
 
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
