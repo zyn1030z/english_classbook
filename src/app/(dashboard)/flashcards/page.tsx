@@ -19,6 +19,9 @@ function mapCard(c: any, review?: any): Flashcard {
     interval: review?.interval ?? 0,
     repetitions: review?.repetitions ?? 0,
     nextReview: review?.next_review ?? c.created_at,
+    lessonId: c.vocabularies?.lesson_id ?? undefined,
+    lessonTitle: c.vocabularies?.lessons?.title ?? undefined,
+    lessonCreatedAt: c.vocabularies?.lessons?.created_at ?? undefined,
   };
 }
 
@@ -27,6 +30,10 @@ async function fetchUserFlashcards(supabase: any, userId: string) {
     .from("flashcards")
     .select(`
       id, vocabulary_id, user_id, front, back, mode, created_at,
+      vocabularies (
+        lesson_id,
+        lessons ( title, created_at )
+      ),
       flashcard_reviews (
         ease_factor, interval, repetitions, next_review, last_review
       )

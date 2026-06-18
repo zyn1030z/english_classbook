@@ -62,6 +62,9 @@ export interface Flashcard {
   interval: number;
   repetitions: number;
   nextReview: string;
+  lessonId?: string;
+  lessonTitle?: string;
+  lessonCreatedAt?: string;
 }
 
 export interface GrammarTopic {
@@ -78,6 +81,7 @@ export interface GrammarNote {
   topicId: string;
   lessonId?: string;
   lessonTitle?: string;
+  lessonCreatedAt?: string;
   title: string;
   explanation: string;
   examples: string[];

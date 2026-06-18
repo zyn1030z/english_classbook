@@ -24,6 +24,7 @@ const levelColors: Record<string, string> = {
 interface LessonGroup {
   lessonId: string;
   lessonTitle: string;
+  lessonCreatedAt: string;
   topicIds: string[];
 }
 
@@ -42,7 +43,7 @@ export function GrammarNotebook({ topics, notes: allNotes }: GrammarNotebookProp
 
   // Build lesson groups: topic → lesson mapping via notes
   const lessonGroups = React.useMemo(() => {
-    const topicLessonMap = new Map<string, { lessonId: string; lessonTitle: string }>();
+    const topicLessonMap = new Map<string, { lessonId: string; lessonTitle: string; lessonCreatedAt: string }>();
 
     // Map each topic to its lesson (via notes)
     for (const note of allNotes) {
@@ -51,6 +52,7 @@ export function GrammarNotebook({ topics, notes: allNotes }: GrammarNotebookProp
           topicLessonMap.set(note.topicId, {
             lessonId: note.lessonId,
             lessonTitle: note.lessonTitle,
+            lessonCreatedAt: note.lessonCreatedAt || "9999",
           });
         }
       }
@@ -70,6 +72,7 @@ export function GrammarNotebook({ topics, notes: allNotes }: GrammarNotebookProp
           groups.set(mapping.lessonId, {
             lessonId: mapping.lessonId,
             lessonTitle: mapping.lessonTitle,
+            lessonCreatedAt: mapping.lessonCreatedAt,
             topicIds: [topic.id],
           });
         }
@@ -78,8 +81,13 @@ export function GrammarNotebook({ topics, notes: allNotes }: GrammarNotebookProp
       }
     }
 
+    // Sort by lesson created_at ascending (oldest first)
+    const sorted = Array.from(groups.values()).sort((a, b) =>
+      a.lessonCreatedAt.localeCompare(b.lessonCreatedAt)
+    );
+
     return {
-      grouped: Array.from(groups.values()),
+      grouped: sorted,
       ungrouped: ungroupedTopicIds,
     };
   }, [topics, allNotes]);
