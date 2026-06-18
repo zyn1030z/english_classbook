@@ -7,8 +7,8 @@ export default async function SpeakingPage() {
   return (
     <div className="space-y-6">
       <section>
-        <p className="text-sm text-muted-foreground">Speaking practice</p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight">Record, replay, and improve fluency</h1>
+        <p className="text-sm text-muted-foreground">Practice & improve fluency</p>
+        <h1 className="mt-1 text-3xl font-bold tracking-tight">Speaking Lab</h1>
       </section>
       <SpeakingPractice questions={questions} />
     </div>

@@ -97,8 +97,8 @@ export default function VocabularyPage() {
   return (
     <div className="space-y-6">
       <section>
-        <p className="text-sm text-muted-foreground">Vocabulary</p>
-        <h1 className="mt-1 text-3xl font-semibold">Search, review, and pronounce words</h1>
+        <p className="text-sm text-muted-foreground">Search, review & practice</p>
+        <h1 className="mt-1 text-3xl font-bold tracking-tight">Word Collection</h1>
       </section>
       <VocabularyTable
         vocabularies={vocabularies}

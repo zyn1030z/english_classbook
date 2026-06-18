@@ -153,7 +153,7 @@ export default async function DashboardPage() {
       <section className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <p className="text-sm text-muted-foreground">Welcome back, {userName}</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-normal">Your English study desk</h1>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight">Dashboard</h1>
         </div>
         <QuickActions />
       </section>

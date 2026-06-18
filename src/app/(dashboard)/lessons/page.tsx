@@ -42,8 +42,8 @@ export default async function LessonsPage() {
   return (
     <div className="space-y-6">
       <section>
-        <p className="text-sm text-muted-foreground">Lesson library</p>
-        <h1 className="mt-1 text-3xl font-semibold">Organize every English lesson</h1>
+        <p className="text-sm text-muted-foreground">Your learning content</p>
+        <h1 className="mt-1 text-3xl font-bold tracking-tight">My Lessons</h1>
       </section>
       {adminStatus && <LessonForm />}
       <LessonList lessons={activeLessons} isAdmin={adminStatus} />

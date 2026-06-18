@@ -108,8 +108,8 @@ export default async function FlashcardsPage() {
     <div className="space-y-6">
       <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-sm text-muted-foreground">Flashcards</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight">Spaced repetition with SM-2</h1>
+          <p className="text-sm text-muted-foreground">Spaced repetition (SM-2)</p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight">Flashcards</h1>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 rounded-xl bg-primary/5 dark:bg-primary/10 border border-primary/10 px-3 py-1.5">

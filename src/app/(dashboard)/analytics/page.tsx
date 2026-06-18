@@ -87,8 +87,8 @@ export default async function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <section>
-        <p className="text-sm text-muted-foreground">Learning analytics</p>
-        <h1 className="mt-1 text-3xl font-semibold">Track progress and retention</h1>
+        <p className="text-sm text-muted-foreground">Progress & performance</p>
+        <h1 className="mt-1 text-3xl font-bold tracking-tight">Analytics</h1>
       </section>
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
