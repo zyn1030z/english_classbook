@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { LessonCard } from "@/features/lessons/components/lesson-card";
 import type { Lesson } from "@/types";
 
-export function LessonList({ lessons }: { lessons: Lesson[] }) {
+export function LessonList({ lessons, isAdmin = false }: { lessons: Lesson[]; isAdmin?: boolean }) {
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
 
@@ -78,7 +78,7 @@ export function LessonList({ lessons }: { lessons: Lesson[] }) {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((lesson) => (
-            <LessonCard key={lesson.id} lesson={lesson} />
+            <LessonCard key={lesson.id} lesson={lesson} isAdmin={isAdmin} />
           ))}
         </div>
       )}

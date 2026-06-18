@@ -27,7 +27,7 @@ import type { Lesson } from "@/types";
 import { EditLessonSheet } from "./edit-lesson-sheet";
 import { useRouter } from "next/navigation";
 
-export function LessonCard({ lesson }: { lesson: Lesson }) {
+export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmin?: boolean }) {
   const [isDeleting, startDelete] = useTransition();
   const [isGenerating, startGenerate] = useTransition();
   const [isPublishing, startPublish] = useTransition();
@@ -78,6 +78,8 @@ export function LessonCard({ lesson }: { lesson: Lesson }) {
                 {lesson.status}
               </Badge>
               
+              {isAdmin && (
+              <>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100 data-[state=open]:opacity-100">
@@ -131,6 +133,8 @@ export function LessonCard({ lesson }: { lesson: Lesson }) {
                 </DropdownMenuContent>
               </DropdownMenu>
               <EditLessonSheet lesson={lesson} open={isEditOpen} onOpenChange={setIsEditOpen} />
+              </>
+              )}
             </div>
           </div>
         </CardHeader>

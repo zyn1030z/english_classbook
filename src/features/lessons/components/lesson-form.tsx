@@ -78,7 +78,7 @@ export function LessonForm() {
           <CardContent className="pt-0 pb-5">
             <form
               ref={formRef}
-              action={createLesson}
+              action={async (formData: FormData) => { await createLesson(formData); }}
               onSubmit={handleFormSubmit}
               className="space-y-4"
             >

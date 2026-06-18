@@ -5,6 +5,19 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/config";
 
+const ADMIN_EMAIL = "hungpt41297@gmail.com";
+
+async function isAdmin(): Promise<boolean> {
+  if (!hasSupabaseConfig()) return true;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.email === ADMIN_EMAIL;
+}
+
+export async function checkIsAdmin(): Promise<boolean> {
+  return isAdmin();
+}
+
 const lessonSchema = z.object({
   title: z.string().min(2),
   description: z.string().default(""),
@@ -13,6 +26,8 @@ const lessonSchema = z.object({
 });
 
 export async function createLesson(formData: FormData) {
+  if (!(await isAdmin())) return { ok: false, message: "Only admin can create lessons" };
+
   const parsed = lessonSchema.safeParse({
     title: formData.get("title"),
     description: formData.get("description"),
@@ -214,6 +229,8 @@ export async function createLesson(formData: FormData) {
 }
 
 export async function updateLessonStatus(id: string, status: "draft" | "published" | "archived") {
+  if (!(await isAdmin())) return { ok: false, message: "Only admin can update lessons" };
+
   if (!hasSupabaseConfig()) {
     revalidatePath("/lessons");
     return { ok: true };
@@ -231,6 +248,8 @@ export async function updateLessonStatus(id: string, status: "draft" | "publishe
 }
 
 export async function updateLesson(id: string, formData: FormData) {
+  if (!(await isAdmin())) return { ok: false, message: "Only admin can update lessons" };
+
   if (!hasSupabaseConfig()) {
     revalidatePath("/lessons");
     return { ok: true };
@@ -267,6 +286,8 @@ export async function updateLesson(id: string, formData: FormData) {
 }
 
 export async function deleteLesson(id: string) {
+  if (!(await isAdmin())) return { ok: false, message: "Only admin can delete lessons" };
+
   if (!hasSupabaseConfig()) {
     revalidatePath("/lessons");
     return { ok: true };
@@ -430,6 +451,7 @@ export async function getLessonFile(lessonId: string) {
 }
 
 export async function reExtractVocabulary(lessonId: string, limit: number = 10, grammarLimit: number = 3) {
+  if (!(await isAdmin())) return { ok: false, message: "Only admin can re-extract" };
   if (!hasSupabaseConfig()) return { ok: false, message: "Database not configured" };
 
   const supabase = await createClient();
@@ -625,6 +647,7 @@ export async function reExtractVocabulary(lessonId: string, limit: number = 10, 
 }
 
 export async function uploadLessonFileAndExtract(lessonId: string, formData: FormData) {
+  if (!(await isAdmin())) return { ok: false, message: "Only admin can upload files" };
   if (!hasSupabaseConfig()) return { ok: false, message: "Database not configured" };
 
   const supabase = await createClient();

@@ -1,5 +1,6 @@
 import { LessonForm } from "@/features/lessons/components/lesson-form";
 import { LessonList } from "@/features/lessons/components/lesson-list";
+import { checkIsAdmin } from "@/features/lessons/actions";
 import { lessons as demoLessons } from "@/lib/utils/demo-data";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/config";
@@ -7,6 +8,7 @@ import type { Lesson } from "@/types";
 
 export default async function LessonsPage() {
   let activeLessons: Lesson[] = demoLessons;
+  const adminStatus = await checkIsAdmin();
 
   if (hasSupabaseConfig()) {
     const supabase = await createClient();
@@ -43,8 +45,8 @@ export default async function LessonsPage() {
         <p className="text-sm text-muted-foreground">Lesson library</p>
         <h1 className="mt-1 text-3xl font-semibold">Organize every English lesson</h1>
       </section>
-      <LessonForm />
-      <LessonList lessons={activeLessons} />
+      {adminStatus && <LessonForm />}
+      <LessonList lessons={activeLessons} isAdmin={adminStatus} />
     </div>
   );
 }
