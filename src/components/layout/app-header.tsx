@@ -171,7 +171,10 @@ export function AppHeader() {
                 </div>
               </div>
               <div className="py-1">
-                <button className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
+                <button
+                  onClick={() => { setIsProfileOpen(false); window.location.href = "/profile"; }}
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
+                >
                   <User className="h-3.5 w-3.5" />
                   <span>Profile Settings</span>
                 </button>

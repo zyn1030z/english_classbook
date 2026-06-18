@@ -1,0 +1,91 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
+
+export async function updateUserProfile(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Not authenticated" };
+
+  const name = formData.get("name") as string;
+  const englishLevel = formData.get("englishLevel") as string;
+  const learningGoal = formData.get("learningGoal") as string;
+
+  // Update core fields (guaranteed to exist)
+  const updatePayload: Record<string, string> = { name, english_level: englishLevel };
+
+  // Attempt learning_goal if column exists
+  if (learningGoal !== null && learningGoal !== undefined) {
+    updatePayload.learning_goal = learningGoal;
+  }
+
+  const { error } = await supabase
+    .from("users")
+    .update(updatePayload)
+    .eq("id", user.id);
+
+  if (error) {
+    // If learning_goal column doesn't exist, retry without it
+    if (error.message?.includes("learning_goal")) {
+      const { error: retryError } = await supabase
+        .from("users")
+        .update({ name, english_level: englishLevel })
+        .eq("id", user.id);
+      if (retryError) {
+        console.error("Update profile retry error:", retryError);
+        return { ok: false, message: retryError.message };
+      }
+    } else {
+      console.error("Update profile error:", error);
+      return { ok: false, message: error.message };
+    }
+  }
+
+  revalidatePath("/profile");
+  revalidatePath("/dashboard");
+  return { ok: true, message: "Profile updated successfully" };
+}
+
+export async function getUserProfile() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: profile } = await supabase
+    .from("users")
+    .select("id, name, email, english_level, streak_count, created_at")
+    .eq("id", user.id)
+    .single();
+
+  // Get stats
+  const { count: vocabCount } = await supabase
+    .from("vocabularies")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
+  const { count: lessonCount } = await supabase
+    .from("lessons")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
+  const { count: quizCount } = await supabase
+    .from("quizzes")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
+  return {
+    ...profile,
+    email: profile?.email || user.email || "",
+    name: profile?.name || user.user_metadata?.name || user.email?.split("@")[0] || "User",
+    englishLevel: profile?.english_level || "A2",
+    learningGoal: (profile as any)?.learning_goal || "",
+    streakCount: profile?.streak_count || 0,
+    createdAt: profile?.created_at || user.created_at,
+    stats: {
+      vocabCount: vocabCount || 0,
+      lessonCount: lessonCount || 0,
+      quizCount: quizCount || 0,
+    },
+  };
+}
