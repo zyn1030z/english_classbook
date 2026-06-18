@@ -173,7 +173,7 @@ export function EditLessonSheet({ lesson, open, onOpenChange }: { lesson: Lesson
                 <input
                   type="range"
                   min="1"
-                  max="10"
+                  max="50"
                   step="1"
                   value={grammarLimit}
                   onChange={(e) => setGrammarLimit(Number(e.target.value))}
@@ -225,7 +225,7 @@ export function EditLessonSheet({ lesson, open, onOpenChange }: { lesson: Lesson
                 <input
                   type="range"
                   min="1"
-                  max="10"
+                  max="50"
                   step="1"
                   value={grammarLimit}
                   onChange={(e) => setGrammarLimit(Number(e.target.value))}
