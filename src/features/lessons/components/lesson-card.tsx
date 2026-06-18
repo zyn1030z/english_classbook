@@ -97,8 +97,11 @@ export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmi
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 pr-6">
-              <CardTitle className="truncate text-lg font-bold tracking-tight">{lesson.title}</CardTitle>
+            <div
+              className="min-w-0 pr-6 cursor-pointer"
+              onClick={() => router.push(`/lessons/${lesson.id}`)}
+            >
+              <CardTitle className="truncate text-lg font-bold tracking-tight hover:text-primary transition-colors">{lesson.title}</CardTitle>
               <div className="mt-1.5 flex items-center gap-2 text-xs font-medium text-muted-foreground/80">
                 <CalendarDays className="h-3.5 w-3.5" />
                 {new Date(lesson.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
