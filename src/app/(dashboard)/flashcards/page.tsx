@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FlashcardReview } from "@/features/flashcards/components/flashcard-review";
 import { ReviewSchedule } from "@/features/flashcards/components/review-schedule";
+import { generateFlashcardsForUser } from "@/features/flashcards/actions";
 import { flashcards as demoFlashcards } from "@/lib/utils/demo-data";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/config";
@@ -21,6 +22,35 @@ function mapCard(c: any, review?: any): Flashcard {
   };
 }
 
+async function fetchUserFlashcards(supabase: any, userId: string) {
+  const { data: dbCards, error } = await supabase
+    .from("flashcards")
+    .select(`
+      id, vocabulary_id, user_id, front, back, mode, created_at,
+      flashcard_reviews (
+        ease_factor, interval, repetitions, next_review, last_review
+      )
+    `)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("[Flashcards] Query error:", error.message);
+    return [];
+  }
+
+  if (!dbCards) return [];
+
+  const now = new Date();
+  return dbCards.map((c: any) => {
+    const reviews = c.flashcard_reviews || [];
+    const latestReview = reviews.length > 0
+      ? reviews.sort((a: any, b: any) => new Date(b.next_review).getTime() - new Date(a.next_review).getTime())[0]
+      : null;
+    return mapCard(c, latestReview);
+  });
+}
+
 export default async function FlashcardsPage() {
   let dueCards: Flashcard[] = [];
   let allCards: Flashcard[] = [];
@@ -30,53 +60,37 @@ export default async function FlashcardsPage() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      // Fetch ALL flashcards with their latest review data
-      const { data: dbCards, error } = await supabase
-        .from("flashcards")
-        .select(`
-          id, vocabulary_id, user_id, front, back, mode, created_at,
-          flashcard_reviews (
-            ease_factor, interval, repetitions, next_review, last_review
-          )
-        `)
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: true });
+      // First fetch
+      allCards = await fetchUserFlashcards(supabase, user.id);
 
-      if (error) {
-        console.error("[Flashcards] Query error:", error.message);
+      // If user has no flashcards, auto-generate from shared vocabularies
+      if (allCards.length === 0) {
+        console.log(`[Flashcards] No cards for user ${user.id}, auto-generating...`);
+        const result = await generateFlashcardsForUser();
+        if (result.ok && result.created > 0) {
+          console.log(`[Flashcards] Generated ${result.created} cards`);
+          // Re-fetch after generation
+          allCards = await fetchUserFlashcards(supabase, user.id);
+        }
       }
 
-      if (dbCards) {
-        const now = new Date();
+      const now = new Date();
 
-        allCards = dbCards.map((c: any) => {
-          // Get the latest review (most recent next_review)
-          const reviews = c.flashcard_reviews || [];
-          const latestReview = reviews.length > 0
-            ? reviews.sort((a: any, b: any) => new Date(b.next_review).getTime() - new Date(a.next_review).getTime())[0]
-            : null;
+      // Due cards: next_review <= now
+      dueCards = allCards.filter((card) => new Date(card.nextReview) <= now);
 
-          return mapCard(c, latestReview);
-        });
+      // Schedule: all cards for the sidebar
+      const nextWeek = new Date();
+      nextWeek.setDate(nextWeek.getDate() + 7);
 
-        // Due cards: next_review <= now OR never reviewed (no review records)
-        dueCards = allCards.filter((card) => {
-          return new Date(card.nextReview) <= now;
-        });
-
-        // Schedule: all cards for the sidebar
-        const nextWeek = new Date();
-        nextWeek.setDate(nextWeek.getDate() + 7);
-
-        scheduleCards = allCards
-          .filter((c) => new Date(c.nextReview) <= nextWeek)
-          .slice(0, 30)
-          .map((c) => ({
-            id: c.id,
-            front: c.front,
-            nextReview: c.nextReview,
-          }));
-      }
+      scheduleCards = allCards
+        .filter((c) => new Date(c.nextReview) <= nextWeek)
+        .slice(0, 30)
+        .map((c) => ({
+          id: c.id,
+          front: c.front,
+          nextReview: c.nextReview,
+        }));
     }
   } else {
     dueCards = demoFlashcards;

@@ -29,7 +29,6 @@ export default function VocabularyPage() {
             example_sentences (*),
             lessons (title)
           `)
-          .eq("user_id", user.id)
           .then(({ data, error }) => {
             if (!error && data) {
               const formatted: Vocabulary[] = data.map((v: any) => ({

@@ -21,7 +21,6 @@ export default async function GrammarPage() {
         supabase
           .from("grammar_notes")
           .select("id, user_id, topic_id, lesson_id, title, explanation, examples, notes, lessons(title)")
-          .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
       ]);
 

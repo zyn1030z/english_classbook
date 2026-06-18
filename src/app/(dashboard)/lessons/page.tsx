@@ -19,7 +19,6 @@ export default async function LessonsPage() {
           vocabularies:vocabularies(count),
           grammar_notes:grammar_notes(count)
         `)
-        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (dbLessons) {
