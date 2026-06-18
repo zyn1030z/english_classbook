@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { RotateCcw, Volume2, Zap, Target, CheckCircle2, BookOpen, Clock, ArrowRight, Layers } from "lucide-react";
+import { RotateCcw, Volume2, Zap, Target, CheckCircle2, BookOpen, Clock, ArrowRight, Layers, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { calculateNextReview } from "@/features/flashcards/sm2";
@@ -10,10 +10,10 @@ import { hasSupabaseConfig } from "@/lib/supabase/config";
 import type { Flashcard } from "@/types";
 
 const ratings = [
-  { key: "1", label: "Again", quality: 1, className: "bg-red-500/90 hover:bg-red-500 text-white shadow-red-500/20" },
-  { key: "2", label: "Hard", quality: 3, className: "bg-orange-500/90 hover:bg-orange-500 text-white shadow-orange-500/20" },
-  { key: "3", label: "Good", quality: 4, className: "bg-blue-500/90 hover:bg-blue-500 text-white shadow-blue-500/20" },
-  { key: "4", label: "Easy", quality: 5, className: "bg-emerald-500/90 hover:bg-emerald-500 text-white shadow-emerald-500/20" },
+  { key: "1", label: "Again", quality: 1, className: "bg-gradient-to-b from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 text-white shadow-lg shadow-red-500/25", icon: "🔁" },
+  { key: "2", label: "Hard", quality: 3, className: "bg-gradient-to-b from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white shadow-lg shadow-orange-500/25", icon: "💪" },
+  { key: "3", label: "Good", quality: 4, className: "bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-white shadow-lg shadow-blue-500/25", icon: "👍" },
+  { key: "4", label: "Easy", quality: 5, className: "bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white shadow-lg shadow-emerald-500/25", icon: "⚡" },
 ];
 
 type StudyMode = "due" | "all";
@@ -24,6 +24,7 @@ export function FlashcardReview({ dueCards, allCards }: { dueCards: Flashcard[];
   const [flipped, setFlipped] = React.useState(false);
   const [completed, setCompleted] = React.useState(0);
   const [schedule, setSchedule] = React.useState("");
+  const [isAnimating, setIsAnimating] = React.useState(false);
 
   const cards = mode === "due" ? dueCards : allCards;
   const hasCards = cards && cards.length > 0;
@@ -50,6 +51,7 @@ export function FlashcardReview({ dueCards, allCards }: { dueCards: Flashcard[];
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasCards, index, flipped, cards, completed, total]);
 
   const modeSelector = (
@@ -138,32 +140,42 @@ export function FlashcardReview({ dueCards, allCards }: { dueCards: Flashcard[];
     );
   }
 
-  async function review(quality: 1 | 3 | 4 | 5) {
-    if (!card) return;
+  function review(quality: 1 | 3 | 4 | 5) {
+    if (!card || isAnimating) return;
+    setIsAnimating(true);
     const next = calculateNextReview(card.easeFactor, card.interval, card.repetitions, quality);
     setSchedule(`Next in ${next.interval}d · EF ${next.easeFactor.toFixed(2)}`);
 
+    // Fire-and-forget: don't block UI for API call
     if (hasSupabaseConfig()) {
       const nextReviewDate = new Date();
       nextReviewDate.setDate(nextReviewDate.getDate() + next.interval);
-      await submitFlashcardReview(
+      submitFlashcardReview(
         card.id,
         quality,
         next.easeFactor,
         next.interval,
         next.repetitions,
         nextReviewDate.toISOString()
-      );
+      ).catch(console.error);
     }
-    setFlipped(false);
-    setCompleted((c) => c + 1);
-    setIndex((value) => value + 1);
+
+    // Transition to next card immediately
+    setTimeout(() => {
+      setFlipped(false);
+      setCompleted((c) => c + 1);
+      setIndex((value) => value + 1);
+      setIsAnimating(false);
+    }, 150);
   }
 
   function speak() {
     if (!card || !("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(new SpeechSynthesisUtterance(card.front));
+    const u = new SpeechSynthesisUtterance(card.front);
+    u.lang = "en-US";
+    u.rate = 0.85;
+    window.speechSynthesis.speak(u);
   }
 
   const progressPercent = total > 0 ? (completed / total) * 100 : 0;
@@ -173,9 +185,12 @@ export function FlashcardReview({ dueCards, allCards }: { dueCards: Flashcard[];
       {/* Header: mode toggle + counter */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         {modeSelector}
-        <Badge variant="outline" className="text-xs font-semibold px-3 py-1 rounded-lg">
-          {completed + 1} / {total}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-xs font-semibold px-3 py-1 rounded-lg border-primary/30 text-primary">
+            <Sparkles className="h-3 w-3 mr-1" />
+            {completed + 1} / {total}
+          </Badge>
+        </div>
       </div>
 
       {/* Progress bar with stats */}
@@ -185,59 +200,113 @@ export function FlashcardReview({ dueCards, allCards }: { dueCards: Flashcard[];
             <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-emerald-500" /> {completed} done</span>
             <span className="flex items-center gap-1"><Target className="h-3 w-3 text-amber-500" /> {remaining} left</span>
           </div>
-          <span>{Math.round(progressPercent)}%</span>
+          <span className="font-bold text-foreground">{Math.round(progressPercent)}%</span>
         </div>
-        <div className="h-2 w-full rounded-full bg-secondary/60 dark:bg-white/5 overflow-hidden">
+        <div className="h-2.5 w-full rounded-full bg-secondary/60 dark:bg-white/[0.04] overflow-hidden ring-1 ring-inset ring-black/5 dark:ring-white/5">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-primary via-primary to-emerald-500 transition-all duration-700 ease-out shadow-[0_0_8px_rgba(var(--primary),0.3)]"
+            className="h-full rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-500 transition-all duration-700 ease-out"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
       </div>
 
-      {/* Flashcard */}
+      {/* Flashcard — 3D Flip with Glassmorphism */}
       <div
-        className="perspective-[1200px] cursor-pointer group"
+        className="cursor-pointer group"
+        style={{ perspective: "1200px" }}
         onClick={() => setFlipped((v) => !v)}
       >
         <div
-          className={`relative w-full min-h-[300px] transition-transform duration-600 [transform-style:preserve-3d] ${
-            flipped ? "[transform:rotateY(180deg)]" : ""
-          }`}
+          className="relative w-full min-h-[320px] transition-transform duration-500 ease-out"
+          style={{
+            transformStyle: "preserve-3d",
+            transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+          }}
         >
-          {/* Front */}
-          <div className="absolute inset-0 [backface-visibility:hidden] rounded-2xl border dark:border-white/10 bg-gradient-to-br from-card to-muted/30 dark:from-[#161616] dark:to-[#1a1a1a] shadow-lg flex flex-col items-center justify-center p-10 text-center">
-            <div className="absolute top-4 left-4">
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50 bg-muted/50 dark:bg-white/5 px-2.5 py-1 rounded-md">Front</span>
-            </div>
-            <p className="text-3xl font-bold leading-tight tracking-tight">{card!.front}</p>
-            <div className="mt-8 flex items-center gap-1.5 text-xs text-muted-foreground/60">
-              <span>Tap or press</span>
-              <kbd className="px-1.5 py-0.5 rounded bg-muted/80 dark:bg-white/10 border border-border/50 text-[10px] font-mono font-bold">Space</kbd>
-              <span>to flip</span>
+          {/* ─── FRONT FACE ─── */}
+          <div
+            className="absolute inset-0 rounded-2xl flex flex-col items-center justify-center p-10 text-center overflow-hidden"
+            style={{ backfaceVisibility: "hidden" }}
+          >
+            {/* Glassmorphism background */}
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/80 to-white/40 dark:from-white/[0.06] dark:to-white/[0.02] backdrop-blur-sm border border-white/30 dark:border-white/10 shadow-2xl shadow-black/5 dark:shadow-black/30" />
+
+            {/* Ambient glow */}
+            <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-blue-500/10 dark:bg-blue-500/5 blur-3xl" />
+            <div className="absolute -bottom-20 -left-20 w-40 h-40 rounded-full bg-indigo-500/10 dark:bg-indigo-500/5 blur-3xl" />
+
+            {/* Content */}
+            <div className="relative z-10">
+              <div className="inline-flex items-center gap-1.5 mb-6">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-600/60 dark:text-blue-400/50 bg-blue-500/10 dark:bg-blue-500/5 px-3 py-1 rounded-full border border-blue-500/10">
+                  Front side
+                </span>
+              </div>
+              <p className="text-3xl sm:text-4xl font-extrabold leading-tight tracking-tight text-foreground">
+                {card!.front}
+              </p>
+              <div className="mt-8 flex items-center gap-1.5 text-xs text-muted-foreground/50">
+                <span>Tap or press</span>
+                <kbd className="px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/10 text-[10px] font-mono font-bold text-foreground/70">
+                  Space
+                </kbd>
+                <span>to flip</span>
+              </div>
             </div>
           </div>
 
-          {/* Back */}
-          <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 dark:from-[#1a1a2e] dark:to-[#161625] shadow-lg flex flex-col items-center justify-center p-10 text-center">
-            <div className="absolute top-4 left-4">
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/60 bg-primary/10 px-2.5 py-1 rounded-md">Back</span>
+          {/* ─── BACK FACE ─── */}
+          <div
+            className="absolute inset-0 rounded-2xl flex flex-col items-center justify-center p-10 text-center overflow-hidden"
+            style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+          >
+            {/* Glassmorphism background — different hue */}
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-50/80 to-blue-50/40 dark:from-emerald-500/[0.06] dark:to-blue-500/[0.03] backdrop-blur-sm border border-emerald-500/20 dark:border-emerald-500/10 shadow-2xl shadow-emerald-500/5 dark:shadow-black/30" />
+
+            {/* Ambient glow */}
+            <div className="absolute -top-20 -left-20 w-40 h-40 rounded-full bg-emerald-500/10 dark:bg-emerald-500/5 blur-3xl" />
+            <div className="absolute -bottom-20 -right-20 w-40 h-40 rounded-full bg-teal-500/10 dark:bg-teal-500/5 blur-3xl" />
+
+            {/* Content */}
+            <div className="relative z-10">
+              <div className="inline-flex items-center gap-1.5 mb-6">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600/60 dark:text-emerald-400/50 bg-emerald-500/10 dark:bg-emerald-500/5 px-3 py-1 rounded-full border border-emerald-500/10">
+                  Back side
+                </span>
+              </div>
+              <p className="text-2xl sm:text-3xl font-extrabold leading-relaxed tracking-tight text-emerald-700 dark:text-emerald-300 whitespace-pre-line">
+                {card!.back}
+              </p>
+              {schedule && (
+                <p className="mt-6 text-[11px] text-muted-foreground bg-black/5 dark:bg-white/5 rounded-full px-4 py-1.5 font-medium inline-flex items-center gap-1.5">
+                  <Clock className="h-3 w-3" />
+                  {schedule}
+                </p>
+              )}
             </div>
-            <p className="text-3xl font-bold leading-tight tracking-tight text-primary">{card!.back}</p>
-            {schedule && (
-              <p className="mt-6 text-[11px] text-muted-foreground bg-muted/30 dark:bg-white/5 rounded-lg px-3 py-1.5 font-medium">{schedule}</p>
-            )}
           </div>
         </div>
       </div>
 
-      {/* Controls */}
+      {/* Controls: Audio + Reset | Rating buttons */}
       <div className="flex items-center gap-3">
         <div className="flex gap-1.5">
-          <Button variant="outline" size="icon" aria-label="Pronounce" onClick={speak} className="rounded-xl dark:border-white/10 h-10 w-10">
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="Pronounce"
+            onClick={(e) => { e.stopPropagation(); speak(); }}
+            className="rounded-xl dark:border-white/10 h-11 w-11 hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-600 dark:hover:text-blue-400 transition-all cursor-pointer"
+          >
             <Volume2 className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" aria-label="Reset card" onClick={() => setFlipped(false)} className="rounded-xl dark:border-white/10 h-10 w-10">
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="Reset card"
+            onClick={(e) => { e.stopPropagation(); setFlipped(false); }}
+            className="rounded-xl dark:border-white/10 h-11 w-11 hover:bg-muted/50 transition-all cursor-pointer"
+          >
             <RotateCcw className="h-4 w-4" />
           </Button>
         </div>
@@ -245,10 +314,11 @@ export function FlashcardReview({ dueCards, allCards }: { dueCards: Flashcard[];
           {ratings.map((r) => (
             <Button
               key={r.key}
-              className={`${r.className} rounded-xl font-bold shadow-lg transition-all duration-200 hover:shadow-xl active:scale-95 h-10`}
+              className={`${r.className} rounded-xl font-bold transition-all duration-200 hover:shadow-xl active:scale-95 h-11 cursor-pointer`}
               onClick={() => review(r.quality as 1 | 3 | 4 | 5)}
+              disabled={isAnimating}
             >
-              <span className="hidden sm:inline mr-1 opacity-60 font-mono text-xs">{r.key}</span>
+              <kbd className="hidden sm:inline mr-1.5 text-[10px] font-mono opacity-60 bg-white/20 px-1.5 py-0.5 rounded">{r.key}</kbd>
               {r.label}
             </Button>
           ))}
