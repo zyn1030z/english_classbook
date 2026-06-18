@@ -106,14 +106,27 @@ export default async function FlashcardsPage() {
 
   return (
     <div className="space-y-6">
-      <section>
-        <p className="text-sm text-muted-foreground">Flashcards</p>
-        <h1 className="mt-1 text-3xl font-semibold">Spaced repetition with SM-2</h1>
+      <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-sm text-muted-foreground">Flashcards</p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight">Spaced repetition with SM-2</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 rounded-xl bg-primary/5 dark:bg-primary/10 border border-primary/10 px-3 py-1.5">
+            <span className="text-xs font-bold">{allCards.length} total</span>
+          </div>
+          <div className="flex items-center gap-1.5 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/10 px-3 py-1.5">
+            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">{dueCards.length} due</span>
+          </div>
+          <div className="flex items-center gap-1.5 rounded-xl bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/10 px-3 py-1.5">
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{allCards.length - dueCards.length} mastered</span>
+          </div>
+        </div>
       </section>
-      <section className="grid gap-4 xl:grid-cols-[1fr_360px]">
-        <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md">
-          <CardHeader>
-            <CardTitle>Review session</CardTitle>
+      <section className="grid gap-5 xl:grid-cols-[1fr_340px] items-start">
+        <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md rounded-2xl overflow-hidden">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-bold">Review session</CardTitle>
             <CardDescription>Use Space to flip, then 1-4 to rate recall quality.</CardDescription>
           </CardHeader>
           <CardContent>
