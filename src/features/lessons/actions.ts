@@ -499,25 +499,39 @@ export async function reExtractVocabulary(lessonId: string, limit: number = 10, 
       keys: Object.keys(aiData),
     });
 
-    // 5. Clean up old vocabulary, example sentences, and flashcards associated with this lesson
-    const { data: oldVocabs } = await supabase
+    // 5. Get existing data to skip duplicates (APPEND mode)
+    const { data: existingVocabs } = await supabase
       .from("vocabularies")
-      .select("id")
+      .select("word")
       .eq("lesson_id", lessonId);
 
-    const vocabIds = oldVocabs?.map((v) => v.id) || [];
+    const existingWords = new Set(
+      (existingVocabs || []).map((v) => v.word.toLowerCase().trim())
+    );
 
-    if (vocabIds.length > 0) {
-      await supabase.from("example_sentences").delete().in("vocabulary_id", vocabIds);
-      await supabase.from("flashcards").delete().in("vocabulary_id", vocabIds);
-      await supabase.from("vocabularies").delete().eq("lesson_id", lessonId);
-    }
+    const { data: existingNotes } = await supabase
+      .from("grammar_notes")
+      .select("topic_id")
+      .eq("lesson_id", lessonId);
 
-    await supabase.from("grammar_notes").delete().eq("lesson_id", lessonId);
+    const existingTopicIds = new Set(
+      (existingNotes || []).map((n) => n.topic_id)
+    );
 
-    // 6. Insert new Vocabularies & Flashcards & Grammar
+    let newVocabCount = 0;
+    let skippedVocabCount = 0;
+    let newGrammarCount = 0;
+    let skippedGrammarCount = 0;
+
+    // 6. Append new Vocabularies & Flashcards (skip duplicates)
     if (aiData.vocabularies && Array.isArray(aiData.vocabularies)) {
       for (const vocab of aiData.vocabularies) {
+        // Skip if word already exists for this lesson
+        if (existingWords.has(vocab.word.toLowerCase().trim())) {
+          skippedVocabCount++;
+          continue;
+        }
+
         const { data: vRecord, error: vError } = await supabase
           .from("vocabularies")
           .insert({
@@ -534,6 +548,9 @@ export async function reExtractVocabulary(lessonId: string, limit: number = 10, 
           .single();
 
         if (!vError && vRecord) {
+          newVocabCount++;
+          existingWords.add(vocab.word.toLowerCase().trim());
+
           await supabase.from("example_sentences").insert({
             vocabulary_id: vRecord.id,
             sentence: vocab.exampleSentence,
@@ -557,6 +574,7 @@ export async function reExtractVocabulary(lessonId: string, limit: number = 10, 
       }
     }
 
+    // 7. Append new Grammar notes (skip duplicates by topic+lesson)
     if (aiData.grammarTopics && Array.isArray(aiData.grammarTopics)) {
       for (const grammar of aiData.grammarTopics) {
         const { data: existingTopic } = await supabase
@@ -573,6 +591,12 @@ export async function reExtractVocabulary(lessonId: string, limit: number = 10, 
         }).select("id").single()).data?.id;
 
         if (topicId) {
+          // Skip if this topic already has a note for this lesson
+          if (existingTopicIds.has(topicId)) {
+            skippedGrammarCount++;
+            continue;
+          }
+
           await supabase.from("grammar_notes").insert({
             user_id: userId,
             topic_id: topicId,
@@ -581,9 +605,13 @@ export async function reExtractVocabulary(lessonId: string, limit: number = 10, 
             explanation: grammar.explanation,
             examples: grammar.examples || []
           });
+          newGrammarCount++;
+          existingTopicIds.add(topicId);
         }
       }
     }
+
+    console.log(`[Re-extract] Vocab: +${newVocabCount} new, ${skippedVocabCount} skipped | Grammar: +${newGrammarCount} new, ${skippedGrammarCount} skipped`);
 
     revalidatePath("/lessons");
     revalidatePath("/vocabulary");
