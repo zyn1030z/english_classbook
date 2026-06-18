@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CalendarDays, FileText, MoreVertical, Trash2, Edit2, Loader2 } from "lucide-react";
+import { CalendarDays, FileText, MoreVertical, Trash2, Edit2, Loader2, Rocket, Wand2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -95,7 +95,7 @@ export function LessonCard({ lesson }: { lesson: Lesson }) {
                       className="gap-2 cursor-pointer text-amber-600 focus:text-amber-600 focus:bg-amber-50 dark:focus:bg-amber-950/20 font-medium"
                       disabled={isPublishing}
                     >
-                      {isPublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <span>🚀</span>}
+                      {isPublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
                       {isPublishing ? "Publishing..." : "Publish Lesson"}
                     </DropdownMenuItem>
                   ) : (
@@ -107,7 +107,7 @@ export function LessonCard({ lesson }: { lesson: Lesson }) {
                       className="gap-2 cursor-pointer text-primary focus:text-primary focus:bg-primary/5 font-medium"
                       disabled={isGenerating}
                     >
-                      {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <span className="text-lg">🪄</span>} 
+                      {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
                       {isGenerating ? "AI is generating..." : "Generate & Play Quiz"}
                     </DropdownMenuItem>
                   )}

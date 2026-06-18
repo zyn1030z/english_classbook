@@ -1,12 +1,87 @@
+"use client";
+
+import * as React from "react";
+import { BookOpen, GraduationCap, Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { LessonCard } from "@/features/lessons/components/lesson-card";
 import type { Lesson } from "@/types";
 
 export function LessonList({ lessons }: { lessons: Lesson[] }) {
+  const [search, setSearch] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState<string>("all");
+
+  const filtered = lessons.filter((l) => {
+    const matchesSearch = l.title.toLowerCase().includes(search.toLowerCase()) ||
+      l.description.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "all" || l.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const totalVocab = lessons.reduce((sum, l) => sum + (l.vocabularyCount || 0), 0);
+  const totalGrammar = lessons.reduce((sum, l) => sum + (l.grammarCount || 0), 0);
+
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {lessons.map((lesson) => (
-        <LessonCard key={lesson.id} lesson={lesson} />
-      ))}
+    <div className="space-y-4">
+      {/* Stats bar */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2 rounded-xl bg-primary/5 dark:bg-primary/10 border border-primary/10 px-3 py-1.5">
+          <BookOpen className="h-3.5 w-3.5 text-primary" />
+          <span className="text-xs font-semibold">{lessons.length} lessons</span>
+        </div>
+        <div className="flex items-center gap-2 rounded-xl bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/10 px-3 py-1.5">
+          <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">{totalVocab} vocab</span>
+        </div>
+        <div className="flex items-center gap-2 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/10 px-3 py-1.5">
+          <GraduationCap className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+          <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">{totalGrammar} grammar</span>
+        </div>
+
+        <div className="ml-auto flex items-center gap-2">
+          {/* Status filter pills */}
+          {["all", "published", "draft"].map((status) => (
+            <button
+              key={status}
+              onClick={() => setStatusFilter(status)}
+              className={`text-[11px] font-medium px-3 py-1 rounded-full border transition-colors cursor-pointer ${
+                statusFilter === status
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-transparent border-border hover:bg-muted text-muted-foreground"
+              }`}
+            >
+              {status === "all" ? "All" : status.charAt(0).toUpperCase() + status.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search lessons..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-10 dark:border-white/10 dark:bg-black/20 focus-visible:ring-primary/50"
+        />
+      </div>
+
+      {/* Grid */}
+      {filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <BookOpen className="h-10 w-10 text-muted-foreground/20 mb-3" />
+          <p className="text-sm font-medium text-muted-foreground">No lessons found</p>
+          <p className="text-xs text-muted-foreground/60 mt-1">
+            {search ? "Try a different search term" : "Create your first lesson above"}
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {filtered.map((lesson) => (
+            <LessonCard key={lesson.id} lesson={lesson} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
