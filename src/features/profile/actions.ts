@@ -54,7 +54,7 @@ export async function getUserProfile() {
 
   const { data: profile } = await supabase
     .from("users")
-    .select("id, name, email, english_level, streak_count, created_at")
+    .select("id, name, email, english_level, streak_count, theme_preference, created_at")
     .eq("id", user.id)
     .single();
 
@@ -80,6 +80,7 @@ export async function getUserProfile() {
     name: profile?.name || user.user_metadata?.name || user.email?.split("@")[0] || "User",
     englishLevel: profile?.english_level || "A2",
     learningGoal: (profile as any)?.learning_goal || "",
+    themePreference: (profile as any)?.theme_preference || "system",
     streakCount: profile?.streak_count || 0,
     createdAt: profile?.created_at || user.created_at,
     stats: {
@@ -88,4 +89,23 @@ export async function getUserProfile() {
       quizCount: quizCount || 0,
     },
   };
+}
+
+export async function saveThemePreference(theme: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const { error } = await supabase
+    .from("users")
+    .update({ theme_preference: theme })
+    .eq("id", user.id);
+
+  if (error) {
+    // Column may not exist yet — silently fail
+    console.error("[Theme] Save error:", error.message);
+    return { ok: false };
+  }
+
+  return { ok: true };
 }

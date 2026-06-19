@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SearchCommand } from "@/components/layout/search-command";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { saveThemePreference } from "@/features/profile/actions";
 import { demoUser } from "@/lib/utils/demo-data";
 import { cn } from "@/lib/utils/cn";
 import { createClient } from "@/lib/supabase/client";
@@ -142,7 +143,11 @@ export function AppHeader() {
             size="icon"
             className="h-9 w-9 text-muted-foreground hover:text-foreground rounded-lg"
             aria-label="Toggle theme"
-            onClick={() => setTheme(isDark ? "light" : "dark")}
+            onClick={() => {
+              const next = isDark ? "light" : "dark";
+              setTheme(next);
+              saveThemePreference(next).catch(console.error);
+            }}
           >
             {isDark ? <Sun className="h-4.5 w-4.5" /> : <Moon className="h-4.5 w-4.5" />}
           </Button>

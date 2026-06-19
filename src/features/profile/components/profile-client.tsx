@@ -11,13 +11,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { updateUserProfile } from "@/features/profile/actions";
+import { updateUserProfile, saveThemePreference } from "@/features/profile/actions";
 
 type ProfileData = {
   name: string;
   email: string;
   englishLevel: string;
   learningGoal: string;
+  themePreference: string;
   streakCount: number;
   createdAt: string;
   stats: {
@@ -245,7 +246,10 @@ export function ProfileClient({ profile }: { profile: ProfileData }) {
                   <button
                     key={t.value}
                     type="button"
-                    onClick={() => setTheme(t.value)}
+                    onClick={() => {
+                      setTheme(t.value);
+                      saveThemePreference(t.value).catch(console.error);
+                    }}
                     className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer border-2 ${
                       theme === t.value
                         ? "border-primary bg-primary/5 dark:bg-primary/10 text-primary shadow-sm"
