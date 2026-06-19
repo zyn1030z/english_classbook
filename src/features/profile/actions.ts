@@ -59,20 +59,14 @@ export async function getUserProfile() {
     .single();
 
   // Get stats
-  const { count: vocabCount } = await supabase
-    .from("vocabularies")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id);
-
-  const { count: lessonCount } = await supabase
-    .from("lessons")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id);
-
-  const { count: quizCount } = await supabase
-    .from("quizzes")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id);
+  const [vocabRes, lessonRes, quizRes, bestScoreRes, masteredRes, reviewCountRes] = await Promise.all([
+    supabase.from("vocabularies").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+    supabase.from("lessons").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+    supabase.from("quizzes").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+    supabase.from("quiz_attempts").select("score").eq("user_id", user.id).order("score", { ascending: false }).limit(1),
+    supabase.from("flashcard_reviews").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("interval", 21),
+    supabase.from("flashcard_reviews").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+  ]);
 
   return {
     ...profile,
@@ -84,9 +78,12 @@ export async function getUserProfile() {
     streakCount: profile?.streak_count || 0,
     createdAt: profile?.created_at || user.created_at,
     stats: {
-      vocabCount: vocabCount || 0,
-      lessonCount: lessonCount || 0,
-      quizCount: quizCount || 0,
+      vocabCount: vocabRes.count || 0,
+      lessonCount: lessonRes.count || 0,
+      quizCount: quizRes.count || 0,
+      bestQuizScore: bestScoreRes.data?.[0]?.score || 0,
+      flashcardMastered: masteredRes.count || 0,
+      totalReviews: reviewCountRes.count || 0,
     },
   };
 }

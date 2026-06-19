@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { updateUserProfile, saveThemePreference } from "@/features/profile/actions";
+import { AchievementGallery } from "@/features/profile/components/achievement-gallery";
 
 type ProfileData = {
   name: string;
@@ -25,6 +26,9 @@ type ProfileData = {
     vocabCount: number;
     lessonCount: number;
     quizCount: number;
+    bestQuizScore: number;
+    flashcardMastered: number;
+    totalReviews: number;
   };
 };
 
@@ -291,6 +295,18 @@ export function ProfileClient({ profile }: { profile: ProfileData }) {
             </div>
           </CardContent>
         </Card>
+
+      {/* Achievements */}
+      <Card className="border-black/5 dark:border-white/10 bg-white dark:bg-[#0f0f13] rounded-2xl">
+        <CardContent className="p-6">
+          <AchievementGallery
+            stats={{
+              ...profile.stats,
+              streakCount: profile.streakCount,
+            }}
+          />
+        </CardContent>
+      </Card>
       </div>
     </div>
   );

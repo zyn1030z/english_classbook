@@ -3,6 +3,7 @@ import { QuickActions } from "@/features/dashboard/components/quick-actions";
 import { RecentLessons } from "@/features/dashboard/components/recent-lessons";
 import { StatsCards } from "@/features/dashboard/components/stats-cards";
 import { TodayReview } from "@/features/dashboard/components/today-review";
+import { BadgeShowcase } from "@/features/dashboard/components/badge-showcase";
 import { WeeklyProgress } from "@/features/analytics/components/weekly-progress";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/config";
@@ -18,6 +19,7 @@ export default async function DashboardPage() {
   let reviewCards: ReviewCard[] = [];
   let recentLessons: RecentLesson[] = [];
   let weeklyData: WeeklyPoint[] = [];
+  let badgeStats = { vocabCount: 0, lessonCount: 0, quizCount: 0, bestQuizScore: 0, flashcardMastered: 0, totalReviews: 0, streakCount: 0 };
 
   if (hasSupabaseConfig()) {
     const supabase = await createClient();
@@ -33,11 +35,15 @@ export default async function DashboardPage() {
       userName = profile?.name || user.user_metadata?.name || user.email?.split("@")[0] || "User";
 
       // Stats: counts + real streak
-      const [lessonsRes, vocabRes, dueRes, streak] = await Promise.all([
+      const [lessonsRes, vocabRes, dueRes, streak, quizCountRes, bestScoreRes, masteredRes, reviewCountRes] = await Promise.all([
         supabase.from("lessons").select("id", { count: "exact", head: true }),
         supabase.from("vocabularies").select("id", { count: "exact", head: true }),
         supabase.from("flashcards").select("id", { count: "exact", head: true }).eq("user_id", user.id),
         calculateStreak(user.id),
+        supabase.from("quizzes").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("quiz_attempts").select("score").eq("user_id", user.id).order("score", { ascending: false }).limit(1),
+        supabase.from("flashcard_reviews").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("interval", 21),
+        supabase.from("flashcard_reviews").select("id", { count: "exact", head: true }).eq("user_id", user.id),
       ]);
 
       stats = {
@@ -45,6 +51,16 @@ export default async function DashboardPage() {
         vocabCount: vocabRes.count ?? 0,
         flashcardDue: dueRes.count ?? 0,
         streakDays: streak,
+      };
+
+      badgeStats = {
+        vocabCount: vocabRes.count ?? 0,
+        lessonCount: lessonsRes.count ?? 0,
+        quizCount: quizCountRes.count ?? 0,
+        bestQuizScore: bestScoreRes.data?.[0]?.score ?? 0,
+        flashcardMastered: masteredRes.count ?? 0,
+        totalReviews: reviewCountRes.count ?? 0,
+        streakCount: streak,
       };
 
       // Today's review cards (personal flashcards with review data)
@@ -161,7 +177,10 @@ export default async function DashboardPage() {
             <WeeklyProgress data={weeklyData} />
           </CardContent>
         </Card>
-        <TodayReview cards={reviewCards} />
+        <div className="space-y-4">
+          <TodayReview cards={reviewCards} />
+          <BadgeShowcase stats={badgeStats} />
+        </div>
       </section>
       <RecentLessons lessons={recentLessons} />
     </div>
