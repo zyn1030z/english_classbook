@@ -40,6 +40,25 @@ export async function submitFlashcardReview(
     return { ok: false, message: error.message };
   }
 
+  // Auto-mark vocabulary as learned when interval reaches 7+ days
+  if (interval >= 7) {
+    const { data: card } = await supabase
+      .from("flashcards")
+      .select("vocabulary_id")
+      .eq("id", flashcardId)
+      .single();
+
+    if (card?.vocabulary_id) {
+      supabase
+        .from("vocabularies")
+        .update({ is_learned: true })
+        .eq("id", card.vocabulary_id)
+        .then(({ error: learnErr }) => {
+          if (learnErr) console.error("[Auto-Learn] Update failed:", learnErr.message);
+        });
+    }
+  }
+
   revalidatePath("/flashcards");
   return { ok: true };
 }

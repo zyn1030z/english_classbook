@@ -865,3 +865,21 @@ export async function getQuizHistory(lessonId: string) {
 
   return data || [];
 }
+
+export async function toggleVocabLearned(vocabId: string, learned: boolean) {
+  if (!hasSupabaseConfig()) return { ok: false };
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("vocabularies")
+    .update({ is_learned: learned })
+    .eq("id", vocabId);
+
+  if (error) {
+    console.error("[Toggle Learned]", error.message);
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/lessons");
+  return { ok: true };
+}

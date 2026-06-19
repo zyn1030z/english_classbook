@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { generateLessonQuiz } from "@/features/lessons/actions";
+import { generateLessonQuiz, toggleVocabLearned } from "@/features/lessons/actions";
 
 type VocabItem = {
   id: string;
@@ -95,8 +95,17 @@ export function LessonDetailClient({ lesson, vocabularies, grammarNotes, lessonF
     v.meaning.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const learnedCount = vocabularies.filter(v => v.is_learned).length;
+  const [localLearned, setLocalLearned] = useState<Record<string, boolean>>({});
+
+  const getIsLearned = (v: VocabItem) => localLearned[v.id] ?? v.is_learned;
+  const learnedCount = vocabularies.filter(v => getIsLearned(v)).length;
   const favoriteCount = vocabularies.filter(v => v.is_favorite).length;
+
+  function handleToggleLearned(vocabId: string, currentLearned: boolean) {
+    const next = !currentLearned;
+    setLocalLearned(prev => ({ ...prev, [vocabId]: next }));
+    toggleVocabLearned(vocabId, next).catch(console.error);
+  }
 
   const difficultyColor = (d: string) => {
     if (d === "easy") return "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400";
@@ -315,9 +324,18 @@ export function LessonDetailClient({ lesson, vocabularies, grammarNotes, lessonF
                       </span>
                     </div>
                     <div className="flex items-center justify-center gap-1.5">
-                      {v.is_learned && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleToggleLearned(v.id, getIsLearned(v)); }}
+                        className="cursor-pointer hover:scale-110 transition-transform"
+                        title={getIsLearned(v) ? "Mark as not learned" : "Mark as learned"}
+                      >
+                        {getIsLearned(v)
+                          ? <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                          : <XCircle className="w-4 h-4 text-muted-foreground/30 hover:text-emerald-400" />
+                        }
+                      </button>
                       {v.is_favorite && <Star className="w-4 h-4 text-amber-500 fill-amber-500" />}
-                      {!v.is_learned && !v.is_favorite && <XCircle className="w-4 h-4 text-muted-foreground/30" />}
                     </div>
                   </div>
                 ))}
