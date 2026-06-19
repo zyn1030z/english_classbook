@@ -31,7 +31,7 @@ interface LessonGroup {
 export function GrammarNotebook({ topics, notes: allNotes }: GrammarNotebookProps) {
   const [selectedTopic, setSelectedTopic] = React.useState(topics[0]?.id ?? "");
   const [query, setQuery] = React.useState("");
-  const [collapsedLessons, setCollapsedLessons] = React.useState<Set<string>>(new Set());
+  const [expandedLessons, setExpandedLessons] = React.useState<Set<string>>(new Set());
 
   const activeTopic = topics.find((t) => t.id === selectedTopic);
 
@@ -93,7 +93,7 @@ export function GrammarNotebook({ topics, notes: allNotes }: GrammarNotebookProp
   }, [topics, allNotes]);
 
   function toggleLesson(lessonId: string) {
-    setCollapsedLessons((prev) => {
+    setExpandedLessons((prev) => {
       const next = new Set(prev);
       if (next.has(lessonId)) {
         next.delete(lessonId);
@@ -166,7 +166,7 @@ export function GrammarNotebook({ topics, notes: allNotes }: GrammarNotebookProp
         <CardContent className="space-y-1 flex-1 overflow-y-auto pr-1">
           {/* Grouped by lesson */}
           {lessonGroups.grouped.map((group) => {
-            const isCollapsed = collapsedLessons.has(group.lessonId);
+            const isCollapsed = !expandedLessons.has(group.lessonId);
             const groupTopics = topics.filter((t) => group.topicIds.includes(t.id));
 
             return (
