@@ -8,811 +8,811 @@ import { hasSupabaseConfig } from "@/lib/supabase/config";
 const ADMIN_EMAIL = "hungpt41297@gmail.com";
 
 async function isAdmin(): Promise<boolean> {
-  if (!hasSupabaseConfig()) return true;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  return user?.email === ADMIN_EMAIL;
+ if (!hasSupabaseConfig()) return true;
+ const supabase = await createClient();
+ const { data: { user } } = await supabase.auth.getUser();
+ return user?.email === ADMIN_EMAIL;
 }
 
 export async function checkIsAdmin(): Promise<boolean> {
-  return isAdmin();
+ return isAdmin();
 }
 
 const lessonSchema = z.object({
-  title: z.string().min(2),
-  description: z.string().default(""),
-  tags: z.string().default(""),
-  status: z.enum(["draft", "published", "archived"]).default("draft")
+ title: z.string().min(2),
+ description: z.string().default(""),
+ tags: z.string().default(""),
+ status: z.enum(["draft", "published", "archived"]).default("draft")
 });
 
 export async function createLesson(formData: FormData) {
-  if (!(await isAdmin())) return { ok: false, message: "Only admin can create lessons" };
+ if (!(await isAdmin())) return { ok: false, message: "Only admin can create lessons" };
 
-  const parsed = lessonSchema.safeParse({
-    title: formData.get("title"),
-    description: formData.get("description"),
-    tags: formData.get("tags"),
-    status: formData.get("status") || "draft"
-  });
+ const parsed = lessonSchema.safeParse({
+ title: formData.get("title"),
+ description: formData.get("description"),
+ tags: formData.get("tags"),
+ status: formData.get("status") || "draft"
+ });
 
-  if (!parsed.success) {
-    return;
-  }
+ if (!parsed.success) {
+ return;
+ }
 
-  if (!hasSupabaseConfig()) {
-    revalidatePath("/lessons");
-    return;
-  }
+ if (!hasSupabaseConfig()) {
+ revalidatePath("/lessons");
+ return;
+ }
 
-  const supabase = await createClient();
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData.user?.id;
+ const supabase = await createClient();
+ const { data: userData } = await supabase.auth.getUser();
+ const userId = userData.user?.id;
 
-  if (!userId) {
-    return;
-  }
+ if (!userId) {
+ return;
+ }
 
-  const vocabLimit = Number(formData.get("vocabLimit")) || 10;
-  const grammarLimit = Number(formData.get("grammarLimit")) || 3;
+ const vocabLimit = Number(formData.get("vocabLimit")) || 10;
+ const grammarLimit = Number(formData.get("grammarLimit")) || 3;
 
-  // Khởi tạo bài học trong DB
-  const { data: lesson, error: lessonError } = await supabase
-    .from("lessons")
-    .insert({
-      user_id: userId,
-      title: parsed.data.title,
-      description: parsed.data.description,
-      tags: parsed.data.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
-      status: parsed.data.status
-    })
-    .select("id")
-    .single();
+ // Khởi tạo bài học trong DB
+ const { data: lesson, error: lessonError } = await supabase
+ .from("lessons")
+ .insert({
+ user_id: userId,
+ title: parsed.data.title,
+ description: parsed.data.description,
+ tags: parsed.data.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+ status: parsed.data.status
+ })
+ .select("id")
+ .single();
 
-  if (lessonError) {
-    console.error("Error creating lesson:", lessonError.message);
-    return;
-  }
+ if (lessonError) {
+ console.error("Error creating lesson:", lessonError.message);
+ return;
+ }
 
-  // Xử lý tệp tải lên nếu có
-  const file = formData.get("file") as File | null;
-  if (file && file.size > 0 && lesson) {
-    try {
-      // Tự động tạo bucket nếu chưa tồn tại
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const bucketExists = buckets?.some((b) => b.name === "lesson-files");
-      if (!bucketExists) {
-        await supabase.storage.createBucket("lesson-files", {
-          public: false,
-          fileSizeLimit: 10485760 // 10MB
-        });
-      }
+ // Xử lý tệp tải lên nếu có
+ const file = formData.get("file") as File | null;
+ if (file && file.size > 0 && lesson) {
+ try {
+ // Tự động tạo bucket nếu chưa tồn tại
+ const { data: buckets } = await supabase.storage.listBuckets();
+ const bucketExists = buckets?.some((b) => b.name === "lesson-files");
+ if (!bucketExists) {
+ await supabase.storage.createBucket("lesson-files", {
+ public: false,
+ fileSizeLimit: 10485760 // 10MB
+ });
+ }
 
-      const fileExt = file.name.split(".").pop();
-      const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-      const filePath = `${userId}/${lesson.id}/${Date.now()}_${safeName}`;
+ const fileExt = file.name.split(".").pop();
+ const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+ const filePath = `${userId}/${lesson.id}/${Date.now()}_${safeName}`;
 
-      // Khởi tạo Supabase Admin Client để vượt qua RLS (Row Level Security) khi upload Storage
-      const { createClient: createAdminClient } = await import("@supabase/supabase-js");
-      const supabaseAdmin = createAdminClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      );
+ // Khởi tạo Supabase Admin Client để vượt qua RLS (Row Level Security) khi upload Storage
+ const { createClient: createAdminClient } = await import("@supabase/supabase-js");
+ const supabaseAdmin = createAdminClient(
+ process.env.NEXT_PUBLIC_SUPABASE_URL!,
+ process.env.SUPABASE_SERVICE_ROLE_KEY!
+ );
 
-      const { data: storageData, error: storageError } = await supabaseAdmin.storage
-        .from("lesson-files")
-        .upload(filePath, file, {
-          contentType: file.type,
-          upsert: true
-        });
+ const { data: storageData, error: storageError } = await supabaseAdmin.storage
+ .from("lesson-files")
+ .upload(filePath, file, {
+ contentType: file.type,
+ upsert: true
+ });
 
-      if (storageError) {
-        console.error("Storage upload error:", storageError.message);
-      } else if (storageData) {
-        // Lưu thông tin tệp vào bảng lesson_files
-        const { error: fileDbError } = await supabaseAdmin
-          .from("lesson_files")
-          .insert({
-            lesson_id: lesson.id,
-            file_url: storageData.path,
-            file_type: file.type,
-            processing_status: 'completed'
-          });
-        
-        if (fileDbError) {
-          console.error("Database error saving file info:", fileDbError.message);
-        }
-      }
+ if (storageError) {
+ console.error("Storage upload error:", storageError.message);
+ } else if (storageData) {
+ // Lưu thông tin tệp vào bảng lesson_files
+ const { error: fileDbError } = await supabaseAdmin
+ .from("lesson_files")
+ .insert({
+ lesson_id: lesson.id,
+ file_url: storageData.path,
+ file_type: file.type,
+ processing_status: 'completed'
+ });
+ 
+ if (fileDbError) {
+ console.error("Database error saving file info:", fileDbError.message);
+ }
+ }
 
-      // ================= AI EXTRACTION PHASE =================
-      // Tách biệt hoàn toàn khỏi kết quả Upload Storage để đảm bảo tính sẵn sàng cao
-      try {
-        const { extractTextFromFile } = await import("@/lib/utils/file-parser");
-        const rawText = await extractTextFromFile(file);
-        console.log("Raw text length:", rawText?.length);
-        
-        if (rawText && rawText.length > 50) {
-          const aiProvider = process.env.AI_PROVIDER || "gemini";
-          console.log(`Starting AI extraction with provider: ${aiProvider}, limit: ${vocabLimit}`);
-          let aiData = null;
-          
-          if (aiProvider === "gemini" && process.env.GEMINI_API_KEY) {
-            const { extractLessonContent } = await import("@/lib/gemini/client");
-            aiData = await extractLessonContent(rawText, vocabLimit, grammarLimit);
-          } else if (aiProvider === "deepseek" && process.env.DEEPSEEK_API_KEY) {
-            const { extractLessonContentDeepseek } = await import("@/lib/deepseek/client");
-            aiData = await extractLessonContentDeepseek(rawText, vocabLimit, grammarLimit);
-          } else {
-            console.warn(`AI Provider '${aiProvider}' is missing its API Key. Skipping extraction.`);
-          }
-          
-          console.log("AI Extraction completed. Data:", aiData ? "YES" : "NO");
-          
-          if (aiData) {
-            // 1. Process Vocabularies
-            if (aiData.vocabularies && Array.isArray(aiData.vocabularies)) {
-              for (const vocab of aiData.vocabularies) {
-                const { data: vRecord, error: vError } = await supabase.from("vocabularies").insert({
-                  user_id: userId,
-                  lesson_id: lesson.id,
-                  word: vocab.word,
-                  meaning: vocab.meaning,
-                  ipa: vocab.ipa,
-                  part_of_speech: vocab.partOfSpeech,
-                  category: vocab.category,
-                  difficulty: vocab.difficulty || 'medium'
-                }).select("id").single();
+ // ================= AI EXTRACTION PHASE =================
+ // Tách biệt hoàn toàn khỏi kết quả Upload Storage để đảm bảo tính sẵn sàng cao
+ try {
+ const { extractTextFromFile } = await import("@/lib/utils/file-parser");
+ const rawText = await extractTextFromFile(file);
+ console.log("Raw text length:", rawText?.length);
+ 
+ if (rawText && rawText.length > 50) {
+ const aiProvider = process.env.AI_PROVIDER || "gemini";
+ console.log(`Starting AI extraction with provider: ${aiProvider}, limit: ${vocabLimit}`);
+ let aiData = null;
+ 
+ if (aiProvider === "gemini" && process.env.GEMINI_API_KEY) {
+ const { extractLessonContent } = await import("@/lib/gemini/client");
+ aiData = await extractLessonContent(rawText, vocabLimit, grammarLimit);
+ } else if (aiProvider === "deepseek" && process.env.DEEPSEEK_API_KEY) {
+ const { extractLessonContentDeepseek } = await import("@/lib/deepseek/client");
+ aiData = await extractLessonContentDeepseek(rawText, vocabLimit, grammarLimit);
+ } else {
+ console.warn(`AI Provider '${aiProvider}' is missing its API Key. Skipping extraction.`);
+ }
+ 
+ console.log("AI Extraction completed. Data:", aiData ? "YES" : "NO");
+ 
+ if (aiData) {
+ // 1. Process Vocabularies
+ if (aiData.vocabularies && Array.isArray(aiData.vocabularies)) {
+ for (const vocab of aiData.vocabularies) {
+ const { data: vRecord, error: vError } = await supabase.from("vocabularies").insert({
+ user_id: userId,
+ lesson_id: lesson.id,
+ word: vocab.word,
+ meaning: vocab.meaning,
+ ipa: vocab.ipa,
+ part_of_speech: vocab.partOfSpeech,
+ category: vocab.category,
+ difficulty: vocab.difficulty || 'medium'
+ }).select("id").single();
 
-                if (!vError && vRecord) {
-                  // Insert example sentence
-                  await supabase.from("example_sentences").insert({
-                    vocabulary_id: vRecord.id,
-                    sentence: vocab.exampleSentence,
-                    translation: vocab.exampleTranslation,
-                    difficulty: vocab.difficulty || 'medium'
-                  });
+ if (!vError && vRecord) {
+ // Insert example sentence
+ await supabase.from("example_sentences").insert({
+ vocabulary_id: vRecord.id,
+ sentence: vocab.exampleSentence,
+ translation: vocab.exampleTranslation,
+ difficulty: vocab.difficulty || 'medium'
+ });
 
-                  // Automatically generate Flashcard
-                  await supabase.from("flashcards").insert({
-                    vocabulary_id: vRecord.id,
-                    user_id: userId,
-                    front: vocab.word,
-                    back: vocab.meaning,
-                    mode: "en_vi"
-                  });
-                }
-              }
-            }
+ // Automatically generate Flashcard
+ await supabase.from("flashcards").insert({
+ vocabulary_id: vRecord.id,
+ user_id: userId,
+ front: vocab.word,
+ back: vocab.meaning,
+ mode: "en_vi"
+ });
+ }
+ }
+ }
 
-            // 2. Process Grammar Topics & Notes (upsert to avoid duplicates)
-            if (aiData.grammarTopics && Array.isArray(aiData.grammarTopics)) {
-              for (const grammar of aiData.grammarTopics) {
-                // Find existing topic by name+level to avoid duplicates
-                const { data: existingTopic } = await supabase
-                  .from("grammar_topics")
-                  .select("id")
-                  .eq("name", grammar.name)
-                  .eq("level", grammar.level)
-                  .maybeSingle();
+ // 2. Process Grammar Topics & Notes (upsert to avoid duplicates)
+ if (aiData.grammarTopics && Array.isArray(aiData.grammarTopics)) {
+ for (const grammar of aiData.grammarTopics) {
+ // Find existing topic by name+level to avoid duplicates
+ const { data: existingTopic } = await supabase
+ .from("grammar_topics")
+ .select("id")
+ .eq("name", grammar.name)
+ .eq("level", grammar.level)
+ .maybeSingle();
 
-                const topicId = existingTopic?.id || (await supabaseAdmin.from("grammar_topics").insert({
-                  name: grammar.name,
-                  level: grammar.level,
-                  description: grammar.description
-                }).select("id").single()).data?.id;
+ const topicId = existingTopic?.id || (await supabaseAdmin.from("grammar_topics").insert({
+ name: grammar.name,
+ level: grammar.level,
+ description: grammar.description
+ }).select("id").single()).data?.id;
 
-                if (topicId) {
-                  await supabase.from("grammar_notes").insert({
-                    user_id: userId,
-                    topic_id: topicId,
-                    lesson_id: lesson.id,
-                    title: grammar.name,
-                    explanation: grammar.explanation,
-                    examples: grammar.examples || []
-                  });
-                }
-              }
-            }
-          }
-        }
-      } catch (aiError: any) {
-        console.error("AI Extraction Pipeline failed:", aiError.message);
-      }
-    } catch (e: any) {
-      console.error("Unexpected error during file upload:", e.message);
-    }
-  }
+ if (topicId) {
+ await supabase.from("grammar_notes").insert({
+ user_id: userId,
+ topic_id: topicId,
+ lesson_id: lesson.id,
+ title: grammar.name,
+ explanation: grammar.explanation,
+ examples: grammar.examples || []
+ });
+ }
+ }
+ }
+ }
+ }
+ } catch (aiError: any) {
+ console.error("AI Extraction Pipeline failed:", aiError.message);
+ }
+ } catch (e: any) {
+ console.error("Unexpected error during file upload:", e.message);
+ }
+ }
 
-  revalidatePath("/lessons");
-  revalidatePath("/grammar");
-  revalidatePath("/flashcards");
-  revalidatePath("/vocabulary");
+ revalidatePath("/lessons");
+ revalidatePath("/grammar");
+ revalidatePath("/flashcards");
+ revalidatePath("/vocabulary");
 }
 
 export async function updateLessonStatus(id: string, status: "draft" | "published" | "archived") {
-  if (!(await isAdmin())) return { ok: false, message: "Only admin can update lessons" };
+ if (!(await isAdmin())) return { ok: false, message: "Only admin can update lessons" };
 
-  if (!hasSupabaseConfig()) {
-    revalidatePath("/lessons");
-    return { ok: true };
-  }
+ if (!hasSupabaseConfig()) {
+ revalidatePath("/lessons");
+ return { ok: true };
+ }
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("lessons").update({ status }).eq("id", id);
+ const supabase = await createClient();
+ const { error } = await supabase.from("lessons").update({ status }).eq("id", id);
 
-  if (error) {
-    return { ok: false, message: error.message };
-  }
+ if (error) {
+ return { ok: false, message: error.message };
+ }
 
-  revalidatePath("/lessons");
-  return { ok: true };
+ revalidatePath("/lessons");
+ return { ok: true };
 }
 
 export async function updateLesson(id: string, formData: FormData) {
-  if (!(await isAdmin())) return { ok: false, message: "Only admin can update lessons" };
+ if (!(await isAdmin())) return { ok: false, message: "Only admin can update lessons" };
 
-  if (!hasSupabaseConfig()) {
-    revalidatePath("/lessons");
-    return { ok: true };
-  }
+ if (!hasSupabaseConfig()) {
+ revalidatePath("/lessons");
+ return { ok: true };
+ }
 
-  const supabase = await createClient();
-  const parsed = lessonSchema.safeParse({
-    title: formData.get("title"),
-    description: formData.get("description"),
-    tags: formData.get("tags"),
-    status: formData.get("status") || "draft"
-  });
+ const supabase = await createClient();
+ const parsed = lessonSchema.safeParse({
+ title: formData.get("title"),
+ description: formData.get("description"),
+ tags: formData.get("tags"),
+ status: formData.get("status") || "draft"
+ });
 
-  if (!parsed.success) {
-    return { ok: false, message: "Invalid form data" };
-  }
+ if (!parsed.success) {
+ return { ok: false, message: "Invalid form data" };
+ }
 
-  const { error } = await supabase
-    .from("lessons")
-    .update({
-      title: parsed.data.title,
-      description: parsed.data.description,
-      tags: parsed.data.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
-      status: parsed.data.status
-    })
-    .eq("id", id);
+ const { error } = await supabase
+ .from("lessons")
+ .update({
+ title: parsed.data.title,
+ description: parsed.data.description,
+ tags: parsed.data.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+ status: parsed.data.status
+ })
+ .eq("id", id);
 
-  if (error) {
-    return { ok: false, message: error.message };
-  }
+ if (error) {
+ return { ok: false, message: error.message };
+ }
 
-  revalidatePath("/lessons");
-  return { ok: true };
+ revalidatePath("/lessons");
+ return { ok: true };
 }
 
 export async function deleteLesson(id: string) {
-  if (!(await isAdmin())) return { ok: false, message: "Only admin can delete lessons" };
+ if (!(await isAdmin())) return { ok: false, message: "Only admin can delete lessons" };
 
-  if (!hasSupabaseConfig()) {
-    revalidatePath("/lessons");
-    return { ok: true };
-  }
+ if (!hasSupabaseConfig()) {
+ revalidatePath("/lessons");
+ return { ok: true };
+ }
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("lessons").delete().eq("id", id);
+ const supabase = await createClient();
+ const { error } = await supabase.from("lessons").delete().eq("id", id);
 
-  if (error) {
-    return { ok: false, message: error.message };
-  }
+ if (error) {
+ return { ok: false, message: error.message };
+ }
 
-  revalidatePath("/lessons");
-  return { ok: true };
+ revalidatePath("/lessons");
+ return { ok: true };
 }
 
 export async function generateLessonQuiz(lessonId: string) {
-  if (!hasSupabaseConfig()) return { ok: false, message: "Database not configured" };
+ if (!hasSupabaseConfig()) return { ok: false, message: "Database not configured" };
 
-  const supabase = await createClient();
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData.user?.id;
-  if (!userId) return { ok: false, message: "Unauthorized" };
+ const supabase = await createClient();
+ const { data: userData } = await supabase.auth.getUser();
+ const userId = userData.user?.id;
+ if (!userId) return { ok: false, message: "Unauthorized" };
 
-  // 1. Fetch source material (Vocab & Grammar)
-  const { data: vocabularies } = await supabase
-    .from("vocabularies")
-    .select("word, meaning, part_of_speech, category")
-    .eq("lesson_id", lessonId)
-    .limit(30);
+ // 1. Fetch source material (Vocab & Grammar)
+ const { data: vocabularies } = await supabase
+ .from("vocabularies")
+ .select("word, meaning, part_of_speech, category")
+ .eq("lesson_id", lessonId)
+ .limit(30);
 
-  const { data: grammarNotes } = await supabase
-    .from("grammar_notes")
-    .select("title, explanation")
-    .eq("lesson_id", lessonId)
-    .limit(10);
+ const { data: grammarNotes } = await supabase
+ .from("grammar_notes")
+ .select("title, explanation")
+ .eq("lesson_id", lessonId)
+ .limit(10);
 
-  if (!vocabularies?.length && !grammarNotes?.length) {
-    return { ok: false, message: "Bài học chưa có dữ liệu từ vựng/ngữ pháp để tạo đề thi." };
-  }
+ if (!vocabularies?.length && !grammarNotes?.length) {
+ return { ok: false, message: "Bài học chưa có dữ liệu từ vựng/ngữ pháp để tạo đề thi." };
+ }
 
-  // 2. Generate Quiz using AI
-  const aiProvider = process.env.AI_PROVIDER || "gemini";
-  let quizData = null;
+ // 2. Generate Quiz using AI
+ const aiProvider = process.env.AI_PROVIDER || "gemini";
+ let quizData = null;
 
-  try {
-    if (aiProvider === "gemini" && process.env.GEMINI_API_KEY) {
-      const { generateQuizContentGemini } = await import("@/lib/gemini/client");
-      quizData = await generateQuizContentGemini(vocabularies || [], grammarNotes || []);
-    } else if (aiProvider === "deepseek" && process.env.DEEPSEEK_API_KEY) {
-      const { generateQuizContentDeepseek } = await import("@/lib/deepseek/client");
-      quizData = await generateQuizContentDeepseek(vocabularies || [], grammarNotes || []);
-    } else {
-      return { ok: false, message: `Missing API Key for ${aiProvider}` };
-    }
-  } catch (error: any) {
-    console.error("AI Quiz Generation Error:", error.message);
-    return { ok: false, message: "AI API error: " + error.message };
-  }
+ try {
+ if (aiProvider === "gemini" && process.env.GEMINI_API_KEY) {
+ const { generateQuizContentGemini } = await import("@/lib/gemini/client");
+ quizData = await generateQuizContentGemini(vocabularies || [], grammarNotes || []);
+ } else if (aiProvider === "deepseek" && process.env.DEEPSEEK_API_KEY) {
+ const { generateQuizContentDeepseek } = await import("@/lib/deepseek/client");
+ quizData = await generateQuizContentDeepseek(vocabularies || [], grammarNotes || []);
+ } else {
+ return { ok: false, message: `Missing API Key for ${aiProvider}` };
+ }
+ } catch (error: any) {
+ console.error("AI Quiz Generation Error:", error.message);
+ return { ok: false, message: "AI API error: " + error.message };
+ }
 
-  if (!quizData || !quizData.questions || quizData.questions.length === 0) {
-    return { ok: false, message: "AI failed to generate quiz questions." };
-  }
+ if (!quizData || !quizData.questions || quizData.questions.length === 0) {
+ return { ok: false, message: "AI failed to generate quiz questions." };
+ }
 
-  // 3. Clear existing quiz for this lesson
-  await supabase.from("quizzes").delete().eq("lesson_id", lessonId).eq("quiz_type", "lesson_review");
+ // 3. Clear existing quiz for this lesson
+ await supabase.from("quizzes").delete().eq("lesson_id", lessonId).eq("quiz_type", "lesson_review");
 
-  // 4. Save to Database
-  const { data: quiz, error: quizError } = await supabase
-    .from("quizzes")
-    .insert({
-      user_id: userId,
-      lesson_id: lessonId,
-      quiz_type: "lesson_review",
-      difficulty: "medium"
-    })
-    .select("id")
-    .single();
+ // 4. Save to Database
+ const { data: quiz, error: quizError } = await supabase
+ .from("quizzes")
+ .insert({
+ user_id: userId,
+ lesson_id: lessonId,
+ quiz_type: "lesson_review",
+ difficulty: "medium"
+ })
+ .select("id")
+ .single();
 
-  if (quizError || !quiz) {
-    console.error("Insert Quiz Error:", quizError);
-    return { ok: false, message: "Database error while saving quiz." };
-  }
+ if (quizError || !quiz) {
+ console.error("Insert Quiz Error:", quizError);
+ return { ok: false, message: "Database error while saving quiz." };
+ }
 
-  // Bulk insert all questions at once (1 round-trip instead of N)
-  const questionRows = quizData.questions.map((q: any) => ({
-    quiz_id: quiz.id,
-    question_type: q.questionType,
-    content: q.content,
-    correct_answer: q.correctAnswer,
-    explanation: q.explanation
-  }));
+ // Bulk insert all questions at once (1 round-trip instead of N)
+ const questionRows = quizData.questions.map((q: any) => ({
+ quiz_id: quiz.id,
+ question_type: q.questionType,
+ content: q.content,
+ correct_answer: q.correctAnswer,
+ explanation: q.explanation
+ }));
 
-  const { data: insertedQuestions, error: bulkQError } = await supabase
-    .from("quiz_questions")
-    .insert(questionRows)
-    .select("id, correct_answer");
+ const { data: insertedQuestions, error: bulkQError } = await supabase
+ .from("quiz_questions")
+ .insert(questionRows)
+ .select("id, correct_answer");
 
-  if (bulkQError || !insertedQuestions) {
-    console.error("Bulk insert questions error:", bulkQError);
-    return { ok: false, message: "Failed to save quiz questions." };
-  }
+ if (bulkQError || !insertedQuestions) {
+ console.error("Bulk insert questions error:", bulkQError);
+ return { ok: false, message: "Failed to save quiz questions." };
+ }
 
-  // Bulk insert all answers at once (1 round-trip instead of N)
-  const allAnswers: { question_id: string; answer: string; is_correct: boolean }[] = [];
-  insertedQuestions.forEach((dbQ: any, idx: number) => {
-    const originalQ = quizData.questions[idx];
-    if (originalQ?.options) {
-      for (const opt of originalQ.options) {
-        allAnswers.push({
-          question_id: dbQ.id,
-          answer: opt,
-          is_correct: opt === originalQ.correctAnswer
-        });
-      }
-    }
-  });
+ // Bulk insert all answers at once (1 round-trip instead of N)
+ const allAnswers: { question_id: string; answer: string; is_correct: boolean }[] = [];
+ insertedQuestions.forEach((dbQ: any, idx: number) => {
+ const originalQ = quizData.questions[idx];
+ if (originalQ?.options) {
+ for (const opt of originalQ.options) {
+ allAnswers.push({
+ question_id: dbQ.id,
+ answer: opt,
+ is_correct: opt === originalQ.correctAnswer
+ });
+ }
+ }
+ });
 
-  if (allAnswers.length > 0) {
-    const { error: bulkAError } = await supabase.from("quiz_answers").insert(allAnswers);
-    if (bulkAError) {
-      console.error("Bulk insert answers error:", bulkAError);
-    }
-  }
+ if (allAnswers.length > 0) {
+ const { error: bulkAError } = await supabase.from("quiz_answers").insert(allAnswers);
+ if (bulkAError) {
+ console.error("Bulk insert answers error:", bulkAError);
+ }
+ }
 
-  revalidatePath("/lessons");
-  revalidatePath(`/lessons/${lessonId}/quiz`);
-  return { ok: true, quizId: quiz.id };
+ revalidatePath("/lessons");
+ revalidatePath(`/lessons/${lessonId}/quiz`);
+ return { ok: true, quizId: quiz.id };
 }
 
 export async function getLessonFile(lessonId: string) {
-  if (!hasSupabaseConfig()) return null;
+ if (!hasSupabaseConfig()) return null;
 
-  // Verify ownership through lessons table (RLS-protected)
-  const supabase = await createClient();
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData.user?.id;
-  if (!userId) return null;
+ // Verify ownership through lessons table (RLS-protected)
+ const supabase = await createClient();
+ const { data: userData } = await supabase.auth.getUser();
+ const userId = userData.user?.id;
+ if (!userId) return null;
 
-  const { data: lesson } = await supabase
-    .from("lessons")
-    .select("id")
-    .eq("id", lessonId)
-    .eq("user_id", userId)
-    .maybeSingle();
+ const { data: lesson } = await supabase
+ .from("lessons")
+ .select("id")
+ .eq("id", lessonId)
+ .eq("user_id", userId)
+ .maybeSingle();
 
-  if (!lesson) return null;
+ if (!lesson) return null;
 
-  // Use admin client to read lesson_files (no user_id column → RLS blocks regular client)
-  const { createClient: createAdminClient } = await import("@supabase/supabase-js");
-  const supabaseAdmin = createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+ // Use admin client to read lesson_files (no user_id column → RLS blocks regular client)
+ const { createClient: createAdminClient } = await import("@supabase/supabase-js");
+ const supabaseAdmin = createAdminClient(
+ process.env.NEXT_PUBLIC_SUPABASE_URL!,
+ process.env.SUPABASE_SERVICE_ROLE_KEY!
+ );
 
-  const { data, error } = await supabaseAdmin
-    .from("lesson_files")
-    .select("id, file_url, file_type")
-    .eq("lesson_id", lessonId)
-    .maybeSingle();
+ const { data, error } = await supabaseAdmin
+ .from("lesson_files")
+ .select("id, file_url, file_type")
+ .eq("lesson_id", lessonId)
+ .maybeSingle();
 
-  if (error) {
-    console.error("Lỗi getLessonFile:", error);
-  }
+ if (error) {
+ console.error("Lỗi getLessonFile:", error);
+ }
 
-  if (error || !data) return null;
+ if (error || !data) return null;
 
-  const fileNameParts = data.file_url.split("/");
-  const lastPart = fileNameParts[fileNameParts.length - 1];
-  const fileName = lastPart.includes("_") ? lastPart.substring(lastPart.indexOf("_") + 1) : lastPart;
+ const fileNameParts = data.file_url.split("/");
+ const lastPart = fileNameParts[fileNameParts.length - 1];
+ const fileName = lastPart.includes("_") ? lastPart.substring(lastPart.indexOf("_") + 1) : lastPart;
 
-  return { 
-    id: data.id, 
-    file_name: fileName, 
-    file_path: data.file_url, 
-    mime_type: data.file_type 
-  };
+ return { 
+ id: data.id, 
+ file_name: fileName, 
+ file_path: data.file_url, 
+ mime_type: data.file_type 
+ };
 }
 
 export async function reExtractVocabulary(lessonId: string, limit: number = 10, grammarLimit: number = 3) {
-  if (!(await isAdmin())) return { ok: false, message: "Only admin can re-extract" };
-  if (!hasSupabaseConfig()) return { ok: false, message: "Database not configured" };
+ if (!(await isAdmin())) return { ok: false, message: "Only admin can re-extract" };
+ if (!hasSupabaseConfig()) return { ok: false, message: "Database not configured" };
 
-  const supabase = await createClient();
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData.user?.id;
-  if (!userId) return { ok: false, message: "Unauthorized" };
+ const supabase = await createClient();
+ const { data: userData } = await supabase.auth.getUser();
+ const userId = userData.user?.id;
+ if (!userId) return { ok: false, message: "Unauthorized" };
 
-  // 1. Get file record (admin client needed - lesson_files has no user_id for RLS)
-    const { createClient: createAdminClient } = await import("@supabase/supabase-js");
-    const supabaseAdmin = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+ // 1. Get file record (admin client needed - lesson_files has no user_id for RLS)
+ const { createClient: createAdminClient } = await import("@supabase/supabase-js");
+ const supabaseAdmin = createAdminClient(
+ process.env.NEXT_PUBLIC_SUPABASE_URL!,
+ process.env.SUPABASE_SERVICE_ROLE_KEY!
+ );
 
-    const { data: fileRecord, error: fileError } = await supabaseAdmin
-    .from("lesson_files")
-    .select("*")
-    .eq("lesson_id", lessonId)
-    .maybeSingle();
+ const { data: fileRecord, error: fileError } = await supabaseAdmin
+ .from("lesson_files")
+ .select("*")
+ .eq("lesson_id", lessonId)
+ .maybeSingle();
 
-  if (fileError || !fileRecord) {
-    return { ok: false, message: "Bài học không có file đính kèm để trích xuất lại." };
-  }
+ if (fileError || !fileRecord) {
+ return { ok: false, message: "Bài học không có file đính kèm để trích xuất lại." };
+ }
 
-  try {
-    // 2. Download file from Storage
+ try {
+ // 2. Download file from Storage
 
-    const { data: blob, error: downloadError } = await supabaseAdmin.storage
-      .from("lesson-files")
-      .download(fileRecord.file_url);
+ const { data: blob, error: downloadError } = await supabaseAdmin.storage
+ .from("lesson-files")
+ .download(fileRecord.file_url);
 
-    if (downloadError || !blob) {
-      return { ok: false, message: "Không thể tải tệp tin từ máy chủ: " + (downloadError?.message || "Unknown error") };
-    }
+ if (downloadError || !blob) {
+ return { ok: false, message: "Không thể tải tệp tin từ máy chủ: " + (downloadError?.message || "Unknown error") };
+ }
 
-    // 3. Extract text from file Blob
-    const { extractTextFromFile } = await import("@/lib/utils/file-parser");
-    const fileName = fileRecord.file_url.split("/").pop() || "document";
-    const file = new File([blob], fileName, { type: fileRecord.file_type });
-    const rawText = await extractTextFromFile(file);
+ // 3. Extract text from file Blob
+ const { extractTextFromFile } = await import("@/lib/utils/file-parser");
+ const fileName = fileRecord.file_url.split("/").pop() || "document";
+ const file = new File([blob], fileName, { type: fileRecord.file_type });
+ const rawText = await extractTextFromFile(file);
 
-    if (!rawText || rawText.length <= 50) {
-      return { ok: false, message: "Văn bản trích xuất từ file quá ngắn hoặc trống." };
-    }
+ if (!rawText || rawText.length <= 50) {
+ return { ok: false, message: "Văn bản trích xuất từ file quá ngắn hoặc trống." };
+ }
 
-    // 4. Extract lesson content via AI
-    const aiProvider = process.env.AI_PROVIDER || "gemini";
-    let aiData = null;
+ // 4. Extract lesson content via AI
+ const aiProvider = process.env.AI_PROVIDER || "gemini";
+ let aiData = null;
 
-    if (aiProvider === "gemini" && process.env.GEMINI_API_KEY) {
-      const { extractLessonContent } = await import("@/lib/gemini/client");
-      aiData = await extractLessonContent(rawText, limit, grammarLimit);
-    } else if (aiProvider === "deepseek" && process.env.DEEPSEEK_API_KEY) {
-      const { extractLessonContentDeepseek } = await import("@/lib/deepseek/client");
-      aiData = await extractLessonContentDeepseek(rawText, limit, grammarLimit);
-    } else {
-      return { ok: false, message: `Chưa cấu hình API Key cho AI Provider: ${aiProvider}` };
-    }
+ if (aiProvider === "gemini" && process.env.GEMINI_API_KEY) {
+ const { extractLessonContent } = await import("@/lib/gemini/client");
+ aiData = await extractLessonContent(rawText, limit, grammarLimit);
+ } else if (aiProvider === "deepseek" && process.env.DEEPSEEK_API_KEY) {
+ const { extractLessonContentDeepseek } = await import("@/lib/deepseek/client");
+ aiData = await extractLessonContentDeepseek(rawText, limit, grammarLimit);
+ } else {
+ return { ok: false, message: `Chưa cấu hình API Key cho AI Provider: ${aiProvider}` };
+ }
 
-    if (!aiData) {
-      return { ok: false, message: "AI trích xuất dữ liệu thất bại." };
-    }
+ if (!aiData) {
+ return { ok: false, message: "AI trích xuất dữ liệu thất bại." };
+ }
 
-    console.log("[Re-extract] AI returned:", {
-      vocabCount: aiData.vocabularies?.length || 0,
-      grammarCount: aiData.grammarTopics?.length || 0,
-      keys: Object.keys(aiData),
-    });
+ console.log("[Re-extract] AI returned:", {
+ vocabCount: aiData.vocabularies?.length || 0,
+ grammarCount: aiData.grammarTopics?.length || 0,
+ keys: Object.keys(aiData),
+ });
 
-    // 5. Get existing data to skip duplicates (APPEND mode)
-    const { data: existingVocabs } = await supabase
-      .from("vocabularies")
-      .select("word")
-      .eq("lesson_id", lessonId);
+ // 5. Get existing data to skip duplicates (APPEND mode)
+ const { data: existingVocabs } = await supabase
+ .from("vocabularies")
+ .select("word")
+ .eq("lesson_id", lessonId);
 
-    const existingWords = new Set(
-      (existingVocabs || []).map((v) => v.word.toLowerCase().trim())
-    );
+ const existingWords = new Set(
+ (existingVocabs || []).map((v) => v.word.toLowerCase().trim())
+ );
 
-    const { data: existingNotes } = await supabase
-      .from("grammar_notes")
-      .select("topic_id")
-      .eq("lesson_id", lessonId);
+ const { data: existingNotes } = await supabase
+ .from("grammar_notes")
+ .select("topic_id")
+ .eq("lesson_id", lessonId);
 
-    const existingTopicIds = new Set(
-      (existingNotes || []).map((n) => n.topic_id)
-    );
+ const existingTopicIds = new Set(
+ (existingNotes || []).map((n) => n.topic_id)
+ );
 
-    let newVocabCount = 0;
-    let skippedVocabCount = 0;
-    let newGrammarCount = 0;
-    let skippedGrammarCount = 0;
+ let newVocabCount = 0;
+ let skippedVocabCount = 0;
+ let newGrammarCount = 0;
+ let skippedGrammarCount = 0;
 
-    // 6. Append new Vocabularies & Flashcards (skip duplicates)
-    if (aiData.vocabularies && Array.isArray(aiData.vocabularies)) {
-      for (const vocab of aiData.vocabularies) {
-        // Skip if word already exists for this lesson
-        if (existingWords.has(vocab.word.toLowerCase().trim())) {
-          skippedVocabCount++;
-          continue;
-        }
+ // 6. Append new Vocabularies & Flashcards (skip duplicates)
+ if (aiData.vocabularies && Array.isArray(aiData.vocabularies)) {
+ for (const vocab of aiData.vocabularies) {
+ // Skip if word already exists for this lesson
+ if (existingWords.has(vocab.word.toLowerCase().trim())) {
+ skippedVocabCount++;
+ continue;
+ }
 
-        const { data: vRecord, error: vError } = await supabase
-          .from("vocabularies")
-          .insert({
-            user_id: userId,
-            lesson_id: lessonId,
-            word: vocab.word,
-            meaning: vocab.meaning,
-            ipa: vocab.ipa,
-            part_of_speech: vocab.partOfSpeech,
-            category: vocab.category,
-            difficulty: vocab.difficulty || 'medium'
-          })
-          .select("id")
-          .single();
+ const { data: vRecord, error: vError } = await supabase
+ .from("vocabularies")
+ .insert({
+ user_id: userId,
+ lesson_id: lessonId,
+ word: vocab.word,
+ meaning: vocab.meaning,
+ ipa: vocab.ipa,
+ part_of_speech: vocab.partOfSpeech,
+ category: vocab.category,
+ difficulty: vocab.difficulty || 'medium'
+ })
+ .select("id")
+ .single();
 
-        if (!vError && vRecord) {
-          newVocabCount++;
-          existingWords.add(vocab.word.toLowerCase().trim());
+ if (!vError && vRecord) {
+ newVocabCount++;
+ existingWords.add(vocab.word.toLowerCase().trim());
 
-          await supabase.from("example_sentences").insert({
-            vocabulary_id: vRecord.id,
-            sentence: vocab.exampleSentence,
-            translation: vocab.exampleTranslation,
-            difficulty: vocab.difficulty || 'medium'
-          });
+ await supabase.from("example_sentences").insert({
+ vocabulary_id: vRecord.id,
+ sentence: vocab.exampleSentence,
+ translation: vocab.exampleTranslation,
+ difficulty: vocab.difficulty || 'medium'
+ });
 
-          const { error: fcError } = await supabase.from("flashcards").insert({
-            vocabulary_id: vRecord.id,
-            user_id: userId,
-            front: vocab.word,
-            back: vocab.meaning,
-            mode: "en_vi"
-          });
-          if (fcError) {
-            console.error("[Re-extract] Flashcard insert failed:", fcError.message, "| vocab:", vocab.word);
-          }
-        } else if (vError) {
-          console.error("[Re-extract] Vocabulary insert failed:", vError.message, "| word:", vocab.word);
-        }
-      }
-    }
+ const { error: fcError } = await supabase.from("flashcards").insert({
+ vocabulary_id: vRecord.id,
+ user_id: userId,
+ front: vocab.word,
+ back: vocab.meaning,
+ mode: "en_vi"
+ });
+ if (fcError) {
+ console.error("[Re-extract] Flashcard insert failed:", fcError.message, "| vocab:", vocab.word);
+ }
+ } else if (vError) {
+ console.error("[Re-extract] Vocabulary insert failed:", vError.message, "| word:", vocab.word);
+ }
+ }
+ }
 
-    // 7. Append new Grammar notes (skip duplicates by topic+lesson)
-    if (aiData.grammarTopics && Array.isArray(aiData.grammarTopics)) {
-      for (const grammar of aiData.grammarTopics) {
-        const { data: existingTopic } = await supabase
-          .from("grammar_topics")
-          .select("id")
-          .eq("name", grammar.name)
-          .eq("level", grammar.level)
-          .maybeSingle();
+ // 7. Append new Grammar notes (skip duplicates by topic+lesson)
+ if (aiData.grammarTopics && Array.isArray(aiData.grammarTopics)) {
+ for (const grammar of aiData.grammarTopics) {
+ const { data: existingTopic } = await supabase
+ .from("grammar_topics")
+ .select("id")
+ .eq("name", grammar.name)
+ .eq("level", grammar.level)
+ .maybeSingle();
 
-        const topicId = existingTopic?.id || (await supabaseAdmin.from("grammar_topics").insert({
-          name: grammar.name,
-          level: grammar.level,
-          description: grammar.description
-        }).select("id").single()).data?.id;
+ const topicId = existingTopic?.id || (await supabaseAdmin.from("grammar_topics").insert({
+ name: grammar.name,
+ level: grammar.level,
+ description: grammar.description
+ }).select("id").single()).data?.id;
 
-        if (topicId) {
-          // Skip if this topic already has a note for this lesson
-          if (existingTopicIds.has(topicId)) {
-            skippedGrammarCount++;
-            continue;
-          }
+ if (topicId) {
+ // Skip if this topic already has a note for this lesson
+ if (existingTopicIds.has(topicId)) {
+ skippedGrammarCount++;
+ continue;
+ }
 
-          await supabase.from("grammar_notes").insert({
-            user_id: userId,
-            topic_id: topicId,
-            lesson_id: lessonId,
-            title: grammar.name,
-            explanation: grammar.explanation,
-            examples: grammar.examples || []
-          });
-          newGrammarCount++;
-          existingTopicIds.add(topicId);
-        }
-      }
-    }
+ await supabase.from("grammar_notes").insert({
+ user_id: userId,
+ topic_id: topicId,
+ lesson_id: lessonId,
+ title: grammar.name,
+ explanation: grammar.explanation,
+ examples: grammar.examples || []
+ });
+ newGrammarCount++;
+ existingTopicIds.add(topicId);
+ }
+ }
+ }
 
-    console.log(`[Re-extract] Vocab: +${newVocabCount} new, ${skippedVocabCount} skipped | Grammar: +${newGrammarCount} new, ${skippedGrammarCount} skipped`);
+ console.log(`[Re-extract] Vocab: +${newVocabCount} new, ${skippedVocabCount} skipped | Grammar: +${newGrammarCount} new, ${skippedGrammarCount} skipped`);
 
-    revalidatePath("/lessons");
-    revalidatePath("/vocabulary");
-    revalidatePath("/grammar");
-    revalidatePath("/flashcards");
-    return { ok: true };
-  } catch (err: any) {
-    console.error("Re-extraction pipeline failed:", err.message);
-    return { ok: false, message: "Lỗi trong quá trình xử lý: " + err.message };
-  }
+ revalidatePath("/lessons");
+ revalidatePath("/vocabulary");
+ revalidatePath("/grammar");
+ revalidatePath("/flashcards");
+ return { ok: true };
+ } catch (err: any) {
+ console.error("Re-extraction pipeline failed:", err.message);
+ return { ok: false, message: "Lỗi trong quá trình xử lý: " + err.message };
+ }
 }
 
 export async function uploadLessonFileAndExtract(lessonId: string, formData: FormData) {
-  if (!(await isAdmin())) return { ok: false, message: "Only admin can upload files" };
-  if (!hasSupabaseConfig()) return { ok: false, message: "Database not configured" };
+ if (!(await isAdmin())) return { ok: false, message: "Only admin can upload files" };
+ if (!hasSupabaseConfig()) return { ok: false, message: "Database not configured" };
 
-  const supabase = await createClient();
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData.user?.id;
-  if (!userId) return { ok: false, message: "Unauthorized" };
+ const supabase = await createClient();
+ const { data: userData } = await supabase.auth.getUser();
+ const userId = userData.user?.id;
+ if (!userId) return { ok: false, message: "Unauthorized" };
 
-  const { data: lesson, error: lessonError } = await supabase
-    .from("lessons")
-    .select("id")
-    .eq("id", lessonId)
-    .eq("user_id", userId)
-    .single();
+ const { data: lesson, error: lessonError } = await supabase
+ .from("lessons")
+ .select("id")
+ .eq("id", lessonId)
+ .eq("user_id", userId)
+ .single();
 
-  if (lessonError || !lesson) return { ok: false, message: "Bài học không tồn tại." };
+ if (lessonError || !lesson) return { ok: false, message: "Bài học không tồn tại." };
 
-  const vocabLimit = Number(formData.get("vocabLimit")) || 10;
-  const grammarLimit = Number(formData.get("grammarLimit")) || 3;
-  const file = formData.get("file") as File | null;
-  if (!file || file.size === 0) {
-    return { ok: false, message: "Vui lòng chọn một tệp hợp lệ." };
-  }
+ const vocabLimit = Number(formData.get("vocabLimit")) || 10;
+ const grammarLimit = Number(formData.get("grammarLimit")) || 3;
+ const file = formData.get("file") as File | null;
+ if (!file || file.size === 0) {
+ return { ok: false, message: "Vui lòng chọn một tệp hợp lệ." };
+ }
 
-  try {
-    const fileExt = file.name.split(".").pop();
-    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const filePath = `${userId}/${lessonId}/${Date.now()}_${safeName}`;
+ try {
+ const fileExt = file.name.split(".").pop();
+ const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+ const filePath = `${userId}/${lessonId}/${Date.now()}_${safeName}`;
 
-    const { createClient: createAdminClient } = await import("@supabase/supabase-js");
-    const supabaseAdmin = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+ const { createClient: createAdminClient } = await import("@supabase/supabase-js");
+ const supabaseAdmin = createAdminClient(
+ process.env.NEXT_PUBLIC_SUPABASE_URL!,
+ process.env.SUPABASE_SERVICE_ROLE_KEY!
+ );
 
-    const { data: buckets } = await supabaseAdmin.storage.listBuckets();
-    const bucketExists = buckets?.some((b) => b.name === "lesson-files");
-    if (!bucketExists) {
-      await supabaseAdmin.storage.createBucket("lesson-files", { public: false, fileSizeLimit: 10485760 });
-    }
+ const { data: buckets } = await supabaseAdmin.storage.listBuckets();
+ const bucketExists = buckets?.some((b) => b.name === "lesson-files");
+ if (!bucketExists) {
+ await supabaseAdmin.storage.createBucket("lesson-files", { public: false, fileSizeLimit: 10485760 });
+ }
 
-    const { data: storageData, error: storageError } = await supabaseAdmin.storage
-      .from("lesson-files")
-      .upload(filePath, file, { contentType: file.type, upsert: true });
+ const { data: storageData, error: storageError } = await supabaseAdmin.storage
+ .from("lesson-files")
+ .upload(filePath, file, { contentType: file.type, upsert: true });
 
-    if (storageError || !storageData) {
-      return { ok: false, message: "Upload storage failed: " + storageError?.message };
-    }
+ if (storageError || !storageData) {
+ return { ok: false, message: "Upload storage failed: " + storageError?.message };
+ }
 
-    await supabaseAdmin.from("lesson_files").delete().eq("lesson_id", lessonId);
+ await supabaseAdmin.from("lesson_files").delete().eq("lesson_id", lessonId);
 
-    const { error: insertError } = await supabaseAdmin.from("lesson_files").insert({
-      lesson_id: lessonId,
-      file_url: storageData.path,
-      file_type: file.type,
-      processing_status: 'completed'
-    });
+ const { error: insertError } = await supabaseAdmin.from("lesson_files").insert({
+ lesson_id: lessonId,
+ file_url: storageData.path,
+ file_type: file.type,
+ processing_status: 'completed'
+ });
 
-    if (insertError) {
-      console.error("Lỗi insert lesson_files:", insertError);
-      return { ok: false, message: "Không thể lưu metadata của file: " + insertError.message };
-    }
+ if (insertError) {
+ console.error("Lỗi insert lesson_files:", insertError);
+ return { ok: false, message: "Không thể lưu metadata của file: " + insertError.message };
+ }
 
-    const { extractTextFromFile } = await import("@/lib/utils/file-parser");
-    const rawText = await extractTextFromFile(file);
+ const { extractTextFromFile } = await import("@/lib/utils/file-parser");
+ const rawText = await extractTextFromFile(file);
 
-    if (!rawText || rawText.length <= 50) {
-      return { ok: false, message: "Văn bản trích xuất từ file quá ngắn hoặc trống." };
-    }
+ if (!rawText || rawText.length <= 50) {
+ return { ok: false, message: "Văn bản trích xuất từ file quá ngắn hoặc trống." };
+ }
 
-    const aiProvider = process.env.AI_PROVIDER || "gemini";
-    let aiData = null;
+ const aiProvider = process.env.AI_PROVIDER || "gemini";
+ let aiData = null;
 
-    if (aiProvider === "gemini" && process.env.GEMINI_API_KEY) {
-      const { extractLessonContent } = await import("@/lib/gemini/client");
-      aiData = await extractLessonContent(rawText, vocabLimit, grammarLimit);
-    } else if (aiProvider === "deepseek" && process.env.DEEPSEEK_API_KEY) {
-      const { extractLessonContentDeepseek } = await import("@/lib/deepseek/client");
-      aiData = await extractLessonContentDeepseek(rawText, vocabLimit, grammarLimit);
-    } else {
-      return { ok: false, message: `Chưa cấu hình API Key cho AI Provider: ${aiProvider}` };
-    }
+ if (aiProvider === "gemini" && process.env.GEMINI_API_KEY) {
+ const { extractLessonContent } = await import("@/lib/gemini/client");
+ aiData = await extractLessonContent(rawText, vocabLimit, grammarLimit);
+ } else if (aiProvider === "deepseek" && process.env.DEEPSEEK_API_KEY) {
+ const { extractLessonContentDeepseek } = await import("@/lib/deepseek/client");
+ aiData = await extractLessonContentDeepseek(rawText, vocabLimit, grammarLimit);
+ } else {
+ return { ok: false, message: `Chưa cấu hình API Key cho AI Provider: ${aiProvider}` };
+ }
 
-    if (!aiData) return { ok: false, message: "AI trích xuất dữ liệu thất bại." };
+ if (!aiData) return { ok: false, message: "AI trích xuất dữ liệu thất bại." };
 
-    const { data: oldVocabs } = await supabase.from("vocabularies").select("id").eq("lesson_id", lessonId);
-    const vocabIds = oldVocabs?.map((v) => v.id) || [];
-    if (vocabIds.length > 0) {
-      await supabase.from("example_sentences").delete().in("vocabulary_id", vocabIds);
-      await supabase.from("flashcards").delete().in("vocabulary_id", vocabIds);
-      await supabase.from("vocabularies").delete().eq("lesson_id", lessonId);
-    }
-    await supabase.from("grammar_notes").delete().eq("lesson_id", lessonId);
+ const { data: oldVocabs } = await supabase.from("vocabularies").select("id").eq("lesson_id", lessonId);
+ const vocabIds = oldVocabs?.map((v) => v.id) || [];
+ if (vocabIds.length > 0) {
+ await supabase.from("example_sentences").delete().in("vocabulary_id", vocabIds);
+ await supabase.from("flashcards").delete().in("vocabulary_id", vocabIds);
+ await supabase.from("vocabularies").delete().eq("lesson_id", lessonId);
+ }
+ await supabase.from("grammar_notes").delete().eq("lesson_id", lessonId);
 
-    if (aiData.vocabularies && Array.isArray(aiData.vocabularies)) {
-      for (const vocab of aiData.vocabularies) {
-        const { data: vRecord, error: vError } = await supabase.from("vocabularies").insert({
-          user_id: userId,
-          lesson_id: lessonId,
-          word: vocab.word,
-          meaning: vocab.meaning,
-          ipa: vocab.ipa,
-          part_of_speech: vocab.partOfSpeech,
-          category: vocab.category,
-          difficulty: vocab.difficulty || 'medium'
-        }).select("id").single();
+ if (aiData.vocabularies && Array.isArray(aiData.vocabularies)) {
+ for (const vocab of aiData.vocabularies) {
+ const { data: vRecord, error: vError } = await supabase.from("vocabularies").insert({
+ user_id: userId,
+ lesson_id: lessonId,
+ word: vocab.word,
+ meaning: vocab.meaning,
+ ipa: vocab.ipa,
+ part_of_speech: vocab.partOfSpeech,
+ category: vocab.category,
+ difficulty: vocab.difficulty || 'medium'
+ }).select("id").single();
 
-        if (!vError && vRecord) {
-          await supabase.from("example_sentences").insert({
-            vocabulary_id: vRecord.id, sentence: vocab.exampleSentence, translation: vocab.exampleTranslation, difficulty: vocab.difficulty || 'medium'
-          });
-          await supabase.from("flashcards").insert({
-            vocabulary_id: vRecord.id, user_id: userId, front: vocab.word, back: vocab.meaning, mode: "en_vi"
-          });
-        }
-      }
-    }
+ if (!vError && vRecord) {
+ await supabase.from("example_sentences").insert({
+ vocabulary_id: vRecord.id, sentence: vocab.exampleSentence, translation: vocab.exampleTranslation, difficulty: vocab.difficulty || 'medium'
+ });
+ await supabase.from("flashcards").insert({
+ vocabulary_id: vRecord.id, user_id: userId, front: vocab.word, back: vocab.meaning, mode: "en_vi"
+ });
+ }
+ }
+ }
 
-    if (aiData.grammarTopics && Array.isArray(aiData.grammarTopics)) {
-      for (const grammar of aiData.grammarTopics) {
-        const { data: existingTopic } = await supabase
-          .from("grammar_topics")
-          .select("id")
-          .eq("name", grammar.name)
-          .eq("level", grammar.level)
-          .maybeSingle();
+ if (aiData.grammarTopics && Array.isArray(aiData.grammarTopics)) {
+ for (const grammar of aiData.grammarTopics) {
+ const { data: existingTopic } = await supabase
+ .from("grammar_topics")
+ .select("id")
+ .eq("name", grammar.name)
+ .eq("level", grammar.level)
+ .maybeSingle();
 
-        const topicId = existingTopic?.id || (await supabaseAdmin.from("grammar_topics").insert({
-          name: grammar.name, level: grammar.level, description: grammar.description
-        }).select("id").single()).data?.id;
+ const topicId = existingTopic?.id || (await supabaseAdmin.from("grammar_topics").insert({
+ name: grammar.name, level: grammar.level, description: grammar.description
+ }).select("id").single()).data?.id;
 
-        if (topicId) {
-          await supabase.from("grammar_notes").insert({
-            user_id: userId, topic_id: topicId, lesson_id: lessonId, title: grammar.name, explanation: grammar.explanation, examples: grammar.examples || []
-          });
-        }
-      }
-    }
+ if (topicId) {
+ await supabase.from("grammar_notes").insert({
+ user_id: userId, topic_id: topicId, lesson_id: lessonId, title: grammar.name, explanation: grammar.explanation, examples: grammar.examples || []
+ });
+ }
+ }
+ }
 
-    revalidatePath("/lessons");
-    revalidatePath("/vocabulary");
-    revalidatePath("/grammar");
-    revalidatePath("/flashcards");
-    return { ok: true, file: { id: Date.now().toString(), file_name: file.name } };
+ revalidatePath("/lessons");
+ revalidatePath("/vocabulary");
+ revalidatePath("/grammar");
+ revalidatePath("/flashcards");
+ return { ok: true, file: { id: Date.now().toString(), file_name: file.name } };
 
-  } catch (err: any) {
-    console.error("Upload & Extraction pipeline failed:", err.message);
-    return { ok: false, message: "Lỗi trong quá trình xử lý: " + err.message };
-  }
+ } catch (err: any) {
+ console.error("Upload & Extraction pipeline failed:", err.message);
+ return { ok: false, message: "Lỗi trong quá trình xử lý: " + err.message };
+ }
 }
 
 // ──────────────────────────────────────────────
@@ -820,66 +820,66 @@ export async function uploadLessonFileAndExtract(lessonId: string, formData: For
 // ──────────────────────────────────────────────
 
 export async function saveQuizAttempt(
-  quizId: string,
-  lessonId: string,
-  score: number,
-  totalQuestions: number,
-  timeSeconds: number
+ quizId: string,
+ lessonId: string,
+ score: number,
+ totalQuestions: number,
+ timeSeconds: number
 ) {
-  if (!hasSupabaseConfig()) return { ok: false, message: "No Supabase config" };
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { ok: false, message: "Not authenticated" };
+ if (!hasSupabaseConfig()) return { ok: false, message: "No Supabase config" };
+ const supabase = await createClient();
+ const { data: { user } } = await supabase.auth.getUser();
+ if (!user) return { ok: false, message: "Not authenticated" };
 
-  const { error } = await supabase.from("quiz_attempts").insert({
-    user_id: user.id,
-    quiz_id: quizId,
-    lesson_id: lessonId,
-    score,
-    total_questions: totalQuestions,
-    time_seconds: timeSeconds,
-  });
+ const { error } = await supabase.from("quiz_attempts").insert({
+ user_id: user.id,
+ quiz_id: quizId,
+ lesson_id: lessonId,
+ score,
+ total_questions: totalQuestions,
+ time_seconds: timeSeconds,
+ });
 
-  if (error) {
-    console.error("Save quiz attempt error:", error);
-    return { ok: false, message: error.message };
-  }
+ if (error) {
+ console.error("Save quiz attempt error:", error);
+ return { ok: false, message: error.message };
+ }
 
-  revalidatePath(`/lessons/${lessonId}`);
-  return { ok: true };
+ revalidatePath(`/lessons/${lessonId}`);
+ return { ok: true };
 }
 
 export async function getQuizHistory(lessonId: string) {
-  if (!hasSupabaseConfig()) return [];
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return [];
+ if (!hasSupabaseConfig()) return [];
+ const supabase = await createClient();
+ const { data: { user } } = await supabase.auth.getUser();
+ if (!user) return [];
 
-  const { data } = await supabase
-    .from("quiz_attempts")
-    .select("id, score, total_questions, time_seconds, created_at")
-    .eq("lesson_id", lessonId)
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(10);
+ const { data } = await supabase
+ .from("quiz_attempts")
+ .select("id, score, total_questions, time_seconds, created_at")
+ .eq("lesson_id", lessonId)
+ .eq("user_id", user.id)
+ .order("created_at", { ascending: false })
+ .limit(10);
 
-  return data || [];
+ return data || [];
 }
 
 export async function toggleVocabLearned(vocabId: string, learned: boolean) {
-  if (!hasSupabaseConfig()) return { ok: false };
-  const supabase = await createClient();
+ if (!hasSupabaseConfig()) return { ok: false };
+ const supabase = await createClient();
 
-  const { error } = await supabase
-    .from("vocabularies")
-    .update({ is_learned: learned })
-    .eq("id", vocabId);
+ const { error } = await supabase
+ .from("vocabularies")
+ .update({ is_learned: learned })
+ .eq("id", vocabId);
 
-  if (error) {
-    console.error("[Toggle Learned]", error.message);
-    return { ok: false, message: error.message };
-  }
+ if (error) {
+ console.error("[Toggle Learned]", error.message);
+ return { ok: false, message: error.message };
+ }
 
-  revalidatePath("/lessons");
-  return { ok: true };
+ revalidatePath("/lessons");
+ return { ok: true };
 }

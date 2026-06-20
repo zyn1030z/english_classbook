@@ -4,113 +4,113 @@ export type Difficulty = "easy" | "medium" | "hard";
 export type FlashcardMode = "en_vi" | "vi_en" | "word_example" | "pronunciation";
 
 export interface UserProfile {
-  id: string;
-  email: string;
-  name: string;
-  avatarUrl?: string;
-  englishLevel: EnglishLevel;
-  learningGoal: string;
-  streakCount: number;
+ id: string;
+ email: string;
+ name: string;
+ avatarUrl?: string;
+ englishLevel: EnglishLevel;
+ learningGoal: string;
+ streakCount: number;
 }
 
 export interface Lesson {
-  id: string;
-  userId: string;
-  title: string;
-  description: string;
-  date: string;
-  tags: string[];
-  status: LessonStatus;
-  vocabularyCount: number;
-  grammarCount: number;
-  learnedCount: number;
+ id: string;
+ userId: string;
+ title: string;
+ description: string;
+ date: string;
+ tags: string[];
+ status: LessonStatus;
+ vocabularyCount: number;
+ grammarCount: number;
+ learnedCount: number;
 }
 
 export interface Vocabulary {
-  id: string;
-  userId: string;
-  lessonId?: string;
-  lesson?: { title: string };
-  word: string;
-  meaning: string;
-  ipa: string;
-  partOfSpeech: string;
-  category: string;
-  difficulty: Difficulty;
-  isLearned: boolean;
-  isFavorite: boolean;
-  examples: ExampleSentence[];
+ id: string;
+ userId: string;
+ lessonId?: string;
+ lesson?: { title: string };
+ word: string;
+ meaning: string;
+ ipa: string;
+ partOfSpeech: string;
+ category: string;
+ difficulty: Difficulty;
+ isLearned: boolean;
+ isFavorite: boolean;
+ examples: ExampleSentence[];
 }
 
 export interface ExampleSentence {
-  id: string;
-  vocabularyId: string;
-  sentence: string;
-  translation: string;
-  difficulty: Difficulty;
-  grammarExplanation?: string;
+ id: string;
+ vocabularyId: string;
+ sentence: string;
+ translation: string;
+ difficulty: Difficulty;
+ grammarExplanation?: string;
 }
 
 export interface Flashcard {
-  id: string;
-  vocabularyId: string;
-  userId: string;
-  front: string;
-  back: string;
-  mode: FlashcardMode;
-  easeFactor: number;
-  interval: number;
-  repetitions: number;
-  nextReview: string;
-  lessonId?: string;
-  lessonTitle?: string;
-  lessonCreatedAt?: string;
+ id: string;
+ vocabularyId: string;
+ userId: string;
+ front: string;
+ back: string;
+ mode: FlashcardMode;
+ easeFactor: number;
+ interval: number;
+ repetitions: number;
+ nextReview: string;
+ lessonId?: string;
+ lessonTitle?: string;
+ lessonCreatedAt?: string;
 }
 
 export interface GrammarTopic {
-  id: string;
-  name: string;
-  level: EnglishLevel;
-  description: string;
-  parentId?: string;
+ id: string;
+ name: string;
+ level: EnglishLevel;
+ description: string;
+ parentId?: string;
 }
 
 export interface GrammarNote {
-  id: string;
-  userId: string;
-  topicId: string;
-  lessonId?: string;
-  lessonTitle?: string;
-  lessonCreatedAt?: string;
-  title: string;
-  explanation: string;
-  examples: string[];
-  notes: string;
+ id: string;
+ userId: string;
+ topicId: string;
+ lessonId?: string;
+ lessonTitle?: string;
+ lessonCreatedAt?: string;
+ title: string;
+ explanation: string;
+ examples: string[];
+ notes: string;
 }
 
 export interface WeeklyProgressPoint {
-  day: string;
-  vocabulary: number;
-  lessons: number;
-  speaking: number;
+ day: string;
+ vocabulary: number;
+ lessons: number;
+ speaking: number;
 }
 
 export interface LearningMetric {
-  label: string;
-  value: string;
-  trend: string;
-  tone: "blue" | "green" | "amber" | "red";
+ label: string;
+ value: string;
+ trend: string;
+ tone: "blue" | "green" | "amber" | "red";
 }
 
 export type QuestType = "review_flashcards" | "add_vocabulary" | "take_quiz";
 
 export interface DailyQuest {
-  id: string;
-  type: QuestType;
-  title: string;
-  description: string;
-  target: number;
-  progress: number;
-  isCompleted: boolean;
-  reward?: number;
+ id: string;
+ type: QuestType;
+ title: string;
+ description: string;
+ target: number;
+ progress: number;
+ isCompleted: boolean;
+ reward?: number;
 }
