@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { deleteLesson, generateLessonQuiz, updateLessonStatus } from "@/features/lessons/actions";
+import { cn } from "@/lib/utils/cn";
 import type { Lesson } from "@/types";
 import { EditLessonSheet } from "./edit-lesson-sheet";
 import { useRouter } from "next/navigation";
@@ -166,7 +167,14 @@ export function LessonCard({ lesson, isAdmin = false, viewMode = "grid" }: { les
   if (viewMode === "list") {
     return (
       <>
-        <div className="group relative flex flex-col sm:flex-row sm:items-center overflow-hidden transition-all duration-300 shadow-sm border border-black/5 dark:border-white/10 bg-white dark:bg-[#0f0f13] hover:-translate-y-0.5 hover:shadow-md hover:border-primary/20 dark:hover:border-primary/30 rounded-xl p-3 pr-4 gap-4">
+        <div className={`group relative flex flex-col sm:flex-row sm:items-center overflow-hidden transition-all duration-300 shadow-sm border rounded-xl p-3 pr-4 gap-4 ${
+          isGenerating
+            ? "border-primary/50 shadow-[0_0_15px_rgba(59,130,246,0.15)] bg-primary/5 dark:bg-primary/10"
+            : "border-black/5 dark:border-white/10 bg-white dark:bg-[#0f0f13] hover:-translate-y-0.5 hover:shadow-md hover:border-primary/20 dark:hover:border-primary/30"
+        }`}>
+          {isGenerating && (
+            <div className="absolute inset-0 bg-primary/10 dark:bg-primary/20 animate-pulse pointer-events-none" />
+          )}
           <div className="hidden sm:flex shrink-0 pl-1">
              <ProgressRing learned={lesson.learnedCount} total={lesson.vocabularyCount} />
           </div>
@@ -195,10 +203,17 @@ export function LessonCard({ lesson, isAdmin = false, viewMode = "grid" }: { les
                 variant="outline"
                 size="sm"
                 disabled={isGenerating || lesson.status === "draft"}
-                className="h-9 rounded-lg font-medium border-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:border-indigo-500/40"
+                className={cn(
+                  "h-9 rounded-lg font-medium transition-all duration-300 relative z-10",
+                  isGenerating
+                    ? "border-primary/50 text-primary bg-primary/10 shadow-[0_0_10px_rgba(59,130,246,0.3)]"
+                    : "border-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:border-indigo-500/40"
+                )}
               >
                 {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin sm:mr-1.5" /> : <Wand2 className="h-3.5 w-3.5 sm:mr-1.5" />}
-                <span className="hidden sm:inline">{isGenerating ? "Generating..." : "Quiz"}</span>
+                <span className="hidden sm:inline transition-opacity duration-300">
+                  {isGenerating ? TIPS[tipIndex].text : "Quiz"}
+                </span>
               </Button>
               <Button
                 onClick={() => router.push(`/lessons/${lesson.id}`)}
