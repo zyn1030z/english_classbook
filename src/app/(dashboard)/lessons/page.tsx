@@ -55,11 +55,13 @@ export default async function LessonsPage() {
 
   return (
     <div className="space-y-6">
-      <section>
-        <p className="text-sm text-muted-foreground">Your learning content</p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight">My Lessons</h1>
+      <section className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider mb-1">Your learning content</p>
+          <h1 className="text-3xl font-bold tracking-tight">My Lessons</h1>
+        </div>
+        {adminStatus && <LessonForm />}
       </section>
-      {adminStatus && <LessonForm />}
       <LessonList lessons={activeLessons} isAdmin={adminStatus} />
     </div>
   );
