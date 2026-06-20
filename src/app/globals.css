@@ -20,6 +20,10 @@
   --accent-foreground: 0.208 0.042 265.755;
   --destructive: 0.577 0.245 27.325;
   --destructive-foreground: 0.984 0.003 247.858;
+  --success: 0.627 0.194 149.214;
+  --success-foreground: 0.984 0.003 247.858;
+  --warning: 0.769 0.188 70.08;
+  --warning-foreground: 0.129 0.042 264.695;
   --border: 0.929 0.013 255.508;
   --input: 0.929 0.013 255.508;
   --ring: 0.704 0.04 256.788;
@@ -55,6 +59,10 @@
   --accent-foreground: 0.984 0.003 247.858;
   --destructive: 0.577 0.245 27.325;
   --destructive-foreground: 0.984 0.003 247.858;
+  --success: 0.627 0.194 149.214;
+  --success-foreground: 0.984 0.003 247.858;
+  --warning: 0.769 0.188 70.08;
+  --warning-foreground: 0.129 0.042 264.695;
   --border: 0.208 0.042 265.755;
   --input: 0.208 0.042 265.755;
   --ring: 0.929 0.013 255.508;

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { motion } from "framer-motion";
 import { RotateCcw, Volume2, Zap, Target, CheckCircle2, BookOpen, Clock, ArrowRight, Layers, Sparkles, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -258,12 +259,13 @@ export function FlashcardReview({ dueCards, allCards }: { dueCards: Flashcard[];
  style={{ perspective: "1200px" }}
  onClick={() => setFlipped((v) => !v)}
  >
- <div
- className="relative w-full min-h-[320px] transition-transform duration-500 ease-out"
+ <motion.div
+ className="relative w-full min-h-[320px]"
  style={{
  transformStyle: "preserve-3d",
- transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
  }}
+ animate={{ rotateY: flipped ? 180 : 0 }}
+ transition={{ type: "spring", stiffness: 260, damping: 20 }}
  >
  {/* ─── FRONT FACE ─── */}
  <div
@@ -327,7 +329,7 @@ export function FlashcardReview({ dueCards, allCards }: { dueCards: Flashcard[];
  )}
  </div>
  </div>
- </div>
+ </motion.div>
  </div>
 
  {/* Controls: Audio + Reset | Rating buttons */}
