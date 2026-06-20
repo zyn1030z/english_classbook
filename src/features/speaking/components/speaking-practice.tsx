@@ -148,7 +148,7 @@ export function SpeakingPractice({ questions: initialQuestions }: { questions: S
       {/* Main panel */}
       <div className="space-y-5">
         {/* Question card */}
-        <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md rounded-2xl overflow-hidden">
+        <Card className=" shadow-md rounded-2xl overflow-hidden">
           <CardContent className="p-0">
             {/* Question header */}
             <div className="flex items-center justify-between px-6 py-3 border-b dark:border-white/5 bg-muted/20 dark:bg-white/[0.02]">
@@ -270,7 +270,7 @@ export function SpeakingPractice({ questions: initialQuestions }: { questions: S
 
         {/* AI Feedback panel */}
         {feedback && (
-          <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md rounded-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-500">
+          <Card className=" shadow-md rounded-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-500">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-blue-500/20 text-primary">
@@ -351,7 +351,7 @@ export function SpeakingPractice({ questions: initialQuestions }: { questions: S
       </div>
 
       {/* Sidebar: Question queue */}
-      <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md rounded-2xl sticky top-6">
+      <Card className=" shadow-md rounded-2xl sticky top-6">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">

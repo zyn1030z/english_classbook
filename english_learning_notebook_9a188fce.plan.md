@@ -4,55 +4,55 @@ overview: Build a complete SaaS web application for English learners to store, o
 todos:
   - id: setup
     content: "Project setup: Next.js 15, TypeScript, TailwindCSS, Shadcn UI, dependencies"
-    status: pending
+    status: done
   - id: database
     content: "Database schema: Supabase migrations for all 18 tables with RLS policies"
-    status: pending
+    status: done
   - id: auth
     content: "Authentication: Supabase Auth with Email, Google, GitHub OAuth"
-    status: pending
+    status: done
   - id: dashboard
     content: "Dashboard: Stats cards, weekly progress chart, today's review widget"
-    status: pending
+    status: done
   - id: lessons
     content: "Lesson module: CRUD, file upload, tags, status management"
-    status: pending
+    status: done
   - id: vocabulary
     content: "Vocabulary module: Search, filter, favorites, pronunciation"
-    status: pending
+    status: done
   - id: flashcards
     content: "Flashcard module: SM-2 algorithm, 4 review modes, keyboard shortcuts"
-    status: pending
+    status: done
   - id: import
     content: "Document import: PDF, DOCX, PPTX, image parsing with OCR"
-    status: pending
+    status: done
   - id: ai-extraction
     content: "AI extraction: Gemini integration for vocabulary, grammar, exercises"
-    status: pending
+    status: done
   - id: ai-generator
     content: "AI generators: Sentence generator, quiz generator"
-    status: pending
+    status: done
   - id: grammar
     content: "Grammar notebook: Topics tree, notes, examples, search"
-    status: pending
+    status: done
   - id: speaking
     content: "Speaking practice: Question generation, audio recording, playback"
-    status: pending
+    status: done
   - id: analytics
     content: "Learning analytics: Charts, metrics, retention tracking"
-    status: pending
+    status: done
   - id: ui-polish
     content: "UI polish: Dark mode, animations, responsive design"
-    status: pending
+    status: in-progress
   - id: deployment
     content: "Deployment: Docker config, Vercel setup, environment variables"
-    status: pending
+    status: in-progress
   - id: testing
     content: "Testing: Unit tests, component tests, E2E tests"
-    status: pending
+    status: in-progress
   - id: docs
     content: "Documentation: README, seed data, API documentation"
-    status: pending
+    status: done
 isProject: false
 ---
 

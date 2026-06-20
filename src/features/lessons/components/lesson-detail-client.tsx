@@ -183,7 +183,7 @@ export function LessonDetailClient({ lesson, vocabularies, grammarNotes, lessonF
       {/* File info + Quiz info */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {lessonFile && (
-          <Card className="border-black/5 dark:border-white/10 bg-white dark:bg-[#0f0f13] rounded-2xl">
+          <Card className=" bg-white rounded-2xl">
             <CardContent className="p-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center flex-shrink-0">
                 <Paperclip className="w-5 h-5 text-orange-600 dark:text-orange-400" />
@@ -198,7 +198,7 @@ export function LessonDetailClient({ lesson, vocabularies, grammarNotes, lessonF
           </Card>
         )}
         {quizInfo && (
-          <Card className="border-black/5 dark:border-white/10 bg-white dark:bg-[#0f0f13] rounded-2xl">
+          <Card className=" bg-white rounded-2xl">
             <CardContent className="p-4 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center flex-shrink-0">
@@ -260,7 +260,7 @@ export function LessonDetailClient({ lesson, vocabularies, grammarNotes, lessonF
               placeholder="Search vocabulary..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 rounded-xl bg-white dark:bg-white/[0.03] border-black/10 dark:border-white/10"
+              className="pl-9 rounded-xl bg-white dark:bg-white/[0.03] border-black/10"
             />
           </div>
 
@@ -271,9 +271,9 @@ export function LessonDetailClient({ lesson, vocabularies, grammarNotes, lessonF
               <p className="font-medium">No vocabulary found</p>
             </div>
           ) : (
-            <div className="rounded-2xl border border-black/5 dark:border-white/10 overflow-hidden bg-white dark:bg-[#0f0f13]">
+            <div className="rounded-2xl border overflow-hidden bg-white">
               {/* Table header */}
-              <div className="grid grid-cols-[1fr_1fr_100px_80px] sm:grid-cols-[1fr_1fr_120px_100px_80px] gap-3 px-4 py-3 bg-black/[0.02] dark:bg-white/[0.02] border-b border-black/5 dark:border-white/5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              <div className="grid grid-cols-[1fr_1fr_100px_80px] sm:grid-cols-[1fr_1fr_120px_100px_80px] gap-3 px-4 py-3 bg-black/[0.02] dark:bg-white/[0.02] border-b dark:border-white/5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                 <span>Word</span>
                 <span>Meaning</span>
                 <span className="hidden sm:block">Category</span>
@@ -352,7 +352,7 @@ export function LessonDetailClient({ lesson, vocabularies, grammarNotes, lessonF
             grammarNotes.map((g) => (
               <Card
                 key={g.id}
-                className="border-black/5 dark:border-white/10 bg-white dark:bg-[#0f0f13] rounded-2xl overflow-hidden"
+                className=" bg-white rounded-2xl overflow-hidden"
               >
                 <button
                   onClick={() => setExpandedGrammar(expandedGrammar === g.id ? null : g.id)}
@@ -423,8 +423,8 @@ export function LessonDetailClient({ lesson, vocabularies, grammarNotes, lessonF
               );
             })()}
           </div>
-          <div className="rounded-2xl border border-black/5 dark:border-white/10 overflow-hidden bg-white dark:bg-[#0f0f13]">
-            <div className="grid grid-cols-[1fr_100px_80px] sm:grid-cols-[1fr_120px_100px_80px] gap-3 px-4 py-3 bg-black/[0.02] dark:bg-white/[0.02] border-b border-black/5 dark:border-white/5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+          <div className="rounded-2xl border overflow-hidden bg-white">
+            <div className="grid grid-cols-[1fr_100px_80px] sm:grid-cols-[1fr_120px_100px_80px] gap-3 px-4 py-3 bg-black/[0.02] dark:bg-white/[0.02] border-b dark:border-white/5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               <span>Date</span>
               <span className="hidden sm:block">Score</span>
               <span>Result</span>
@@ -473,7 +473,7 @@ function StatCard({ icon: Icon, label, value, color }: { icon: any; label: strin
     amber: "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400",
   };
   return (
-    <Card className="border-black/5 dark:border-white/10 bg-white dark:bg-[#0f0f13] rounded-2xl">
+    <Card className=" bg-white rounded-2xl">
       <CardContent className="p-4 flex items-center gap-3">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${colorMap[color]}`}>
           <Icon className="w-5 h-5" />

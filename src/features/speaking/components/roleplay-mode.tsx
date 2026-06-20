@@ -106,7 +106,7 @@ export function RoleplayMode({ scenarios }: { scenarios: RoleplayScenario[] }) {
   return (
     <div className="grid gap-5 lg:grid-cols-[280px_1fr] items-start h-[calc(100vh-160px)] min-h-[600px]">
       {/* Sidebar: Scenario Selection */}
-      <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md rounded-2xl h-full flex flex-col">
+      <Card className=" shadow-md rounded-2xl h-full flex flex-col">
         <div className="p-4 border-b dark:border-white/5 font-bold text-sm">Select Scenario</div>
         <div className="p-3 flex-1 overflow-y-auto space-y-2">
           {scenarios.map(s => (
@@ -127,7 +127,7 @@ export function RoleplayMode({ scenarios }: { scenarios: RoleplayScenario[] }) {
       </Card>
 
       {/* Main Chat Area */}
-      <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md rounded-2xl h-full flex flex-col overflow-hidden relative">
+      <Card className=" shadow-md rounded-2xl h-full flex flex-col overflow-hidden relative">
         {/* Header */}
         <div className="flex items-center gap-3 px-6 py-4 border-b dark:border-white/5 bg-muted/20 dark:bg-white/[0.02]">
           <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">

@@ -5,6 +5,7 @@ import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
 import * as React from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { SearchCommand } from "@/components/layout/search-command";
 import { useSidebar } from "@/hooks/use-sidebar";
@@ -185,7 +186,7 @@ export function AppHeader() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9 text-muted-foreground hover:text-foreground rounded-lg"
+            className="h-9 w-9 text-muted-foreground hover:text-foreground rounded-lg overflow-hidden relative"
             aria-label="Toggle theme"
             onClick={() => {
               const next = isDark ? "light" : "dark";
@@ -193,7 +194,18 @@ export function AppHeader() {
               saveThemePreference(next).catch(console.error);
             }}
           >
-            {isDark ? <Sun className="h-4.5 w-4.5" /> : <Moon className="h-4.5 w-4.5" />}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={isDark ? "dark" : "light"}
+                initial={{ y: -20, opacity: 0, rotate: -90 }}
+                animate={{ y: 0, opacity: 1, rotate: 0 }}
+                exit={{ y: 20, opacity: 0, rotate: 90 }}
+                transition={{ duration: 0.2 }}
+                className="absolute flex items-center justify-center inset-0"
+              >
+                {isDark ? <Sun className="h-4.5 w-4.5" /> : <Moon className="h-4.5 w-4.5" />}
+              </motion.div>
+            </AnimatePresence>
           </Button>
         </div>
 
@@ -207,48 +219,56 @@ export function AppHeader() {
           </button>
 
           {/* Profile Dropdown Menu */}
-          {isProfileOpen && (
-            <div className="absolute right-0 mt-2 w-56 origin-top-right rounded-lg border border-border/80 bg-popover p-1 shadow-lg ring-1 ring-black/5 focus:outline-none z-50 transition-all duration-200">
-              <div className="px-3 py-2 border-b border-border/60">
-                <p className="text-xs font-semibold text-foreground truncate">{userProfile?.name || "Loading..."}</p>
-                <p className="text-[10px] text-muted-foreground truncate">{userProfile?.email || ""}</p>
-                <div className="mt-1.5 inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-                  Level {userProfile?.englishLevel || "A2"}
+          <AnimatePresence>
+            {isProfileOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="absolute right-0 mt-2 w-56 origin-top-right rounded-lg border border-border/80 bg-popover p-1 shadow-lg ring-1 ring-black/5 focus:outline-none z-50"
+              >
+                <div className="px-3 py-2 border-b border-border/60">
+                  <p className="text-xs font-semibold text-foreground truncate">{userProfile?.name || "Loading..."}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{userProfile?.email || ""}</p>
+                  <div className="mt-1.5 inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                    Level {userProfile?.englishLevel || "A2"}
+                  </div>
                 </div>
-              </div>
-              <div className="py-1">
-                <button
-                  onClick={() => { setIsProfileOpen(false); window.location.href = "/profile"; }}
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
-                >
-                  <User className="h-3.5 w-3.5" />
-                  <span>Profile Settings</span>
-                </button>
-                <button
-                  onClick={() => { setIsProfileOpen(false); window.location.href = "/profile#preferences"; }}
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
-                >
-                  <Settings className="h-3.5 w-3.5" />
-                  <span>System Preferences</span>
-                </button>
-              </div>
-              <div className="border-t border-border/60 py-1">
-                <button
-                  onClick={async () => {
-                    if (hasSupabaseConfig()) {
-                      const supabase = createClient();
-                      await supabase.auth.signOut();
-                    }
-                    window.location.href = "/login";
-                  }}
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10 transition-colors"
-                >
-                  <LogOut className="h-3.5 w-3.5" />
-                  <span>Log out</span>
-                </button>
-              </div>
-            </div>
-          )}
+                <div className="py-1">
+                  <button
+                    onClick={() => { setIsProfileOpen(false); window.location.href = "/profile"; }}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    <User className="h-3.5 w-3.5" />
+                    <span>Profile Settings</span>
+                  </button>
+                  <button
+                    onClick={() => { setIsProfileOpen(false); window.location.href = "/profile#preferences"; }}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    <Settings className="h-3.5 w-3.5" />
+                    <span>System Preferences</span>
+                  </button>
+                </div>
+                <div className="border-t border-border/60 py-1">
+                  <button
+                    onClick={async () => {
+                      if (hasSupabaseConfig()) {
+                        const supabase = createClient();
+                        await supabase.auth.signOut();
+                      }
+                      window.location.href = "/login";
+                    }}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    <span>Log out</span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </header>

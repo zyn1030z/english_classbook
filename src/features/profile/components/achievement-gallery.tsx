@@ -220,7 +220,7 @@ function BadgeCard({ badge, stats, unlocked }: { badge: Badge; stats: Achievemen
     <div
       className={`relative rounded-xl border p-4 transition-all duration-300 ${
         unlocked
-          ? `border-border/60 dark:border-white/10 bg-card shadow-lg ${badge.glowColor} hover:scale-[1.02]`
+          ? `border-border/60 bg-card shadow-lg ${badge.glowColor} hover:scale-[1.02]`
           : "border-dashed border-border/40 dark:border-white/5 bg-muted/20 dark:bg-white/[0.01] opacity-60"
       }`}
     >

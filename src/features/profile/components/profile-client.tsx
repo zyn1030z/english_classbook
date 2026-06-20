@@ -94,11 +94,11 @@ export function ProfileClient({ profile }: { profile: ProfileData }) {
       </section>
 
       {/* Profile Card */}
-      <Card className="border-black/5 dark:border-white/10 bg-white dark:bg-[#0f0f13] rounded-2xl overflow-hidden">
+      <Card className=" bg-white rounded-2xl overflow-hidden">
         {/* Gradient banner */}
         <div className="h-24 bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-600 relative">
           <div className="absolute -bottom-10 left-6">
-            <div className="w-20 h-20 rounded-2xl bg-white dark:bg-[#0f0f13] shadow-xl flex items-center justify-center text-2xl font-bold text-primary border-4 border-white dark:border-[#0f0f13]">
+            <div className="w-20 h-20 rounded-2xl bg-white shadow-xl flex items-center justify-center text-2xl font-bold text-primary border-4 border-white dark:border-[#0f0f13]">
               {initials}
             </div>
           </div>
@@ -136,7 +136,7 @@ export function ProfileClient({ profile }: { profile: ProfileData }) {
       </div>
 
       {/* Edit Form */}
-      <Card className="border-black/5 dark:border-white/10 bg-white dark:bg-[#0f0f13] rounded-2xl">
+      <Card className=" bg-white rounded-2xl">
         <CardContent className="p-6 space-y-5">
           <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Personal Information</h3>
 
@@ -151,7 +151,7 @@ export function ProfileClient({ profile }: { profile: ProfileData }) {
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="rounded-xl bg-black/[0.02] dark:bg-white/[0.03] border-black/10 dark:border-white/10 focus-visible:ring-primary/30"
+                className="rounded-xl bg-black/[0.02] dark:bg-white/[0.03] border-black/10 focus-visible:ring-primary/30"
               />
             </div>
 
@@ -164,7 +164,7 @@ export function ProfileClient({ profile }: { profile: ProfileData }) {
               <Input
                 value={profile.email}
                 disabled
-                className="rounded-xl bg-black/[0.02] dark:bg-white/[0.03] border-black/10 dark:border-white/10 opacity-60"
+                className="rounded-xl bg-black/[0.02] dark:bg-white/[0.03] border-black/10 opacity-60"
               />
               <p className="text-[11px] text-muted-foreground">Email cannot be changed</p>
             </div>
@@ -205,7 +205,7 @@ export function ProfileClient({ profile }: { profile: ProfileData }) {
                 onChange={(e) => setGoal(e.target.value)}
                 placeholder="e.g., Pass IELTS 7.0, Improve speaking fluency, Read English novels..."
                 rows={3}
-                className="rounded-xl bg-black/[0.02] dark:bg-white/[0.03] border-black/10 dark:border-white/10 resize-none focus-visible:ring-primary/30"
+                className="rounded-xl bg-black/[0.02] dark:bg-white/[0.03] border-black/10 resize-none focus-visible:ring-primary/30"
               />
             </div>
           </div>
@@ -231,7 +231,7 @@ export function ProfileClient({ profile }: { profile: ProfileData }) {
 
       {/* System Preferences */}
       <div ref={prefsRef} id="preferences">
-        <Card className="border-black/5 dark:border-white/10 bg-white dark:bg-[#0f0f13] rounded-2xl">
+        <Card className=" bg-white rounded-2xl">
           <CardContent className="p-6 space-y-6">
             <div className="flex items-center gap-2">
               <Settings className="w-4 h-4 text-muted-foreground" />
@@ -290,14 +290,14 @@ export function ProfileClient({ profile }: { profile: ProfileData }) {
             </div>
 
             {/* Keyboard Shortcuts hint */}
-            <div className="pt-2 border-t border-black/5 dark:border-white/5">
+            <div className="pt-2 border-t dark:border-white/5">
               <p className="text-xs text-muted-foreground">💡 Tip: Use the moon/sun icon in the header bar for quick theme switching.</p>
             </div>
           </CardContent>
         </Card>
 
       {/* Achievements */}
-      <Card className="border-black/5 dark:border-white/10 bg-white dark:bg-[#0f0f13] rounded-2xl">
+      <Card className=" bg-white rounded-2xl">
         <CardContent className="p-6">
           <AchievementGallery
             stats={{
@@ -320,7 +320,7 @@ function StatCard({ icon: Icon, label, value, color, suffix = "" }: { icon: any;
     amber: "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400",
   };
   return (
-    <Card className="border-black/5 dark:border-white/10 bg-white dark:bg-[#0f0f13] rounded-2xl">
+    <Card className=" bg-white rounded-2xl">
       <CardContent className="p-4 flex items-center gap-3">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${colorMap[color]}`}>
           <Icon className="w-5 h-5" />

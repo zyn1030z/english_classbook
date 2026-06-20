@@ -25,7 +25,7 @@ export function LessonList({ lessons, isAdmin = false }: { lessons: Lesson[]; is
   return (
     <div className="space-y-4">
       {/* Toolbar: Search, Filters & View Toggle */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 bg-white dark:bg-[#161616] p-3 rounded-2xl border dark:border-white/10 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 bg-white p-3 rounded-2xl border shadow-sm">
         <div className="relative flex-1 sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input

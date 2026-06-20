@@ -131,7 +131,7 @@ export default async function FlashcardsPage() {
         </div>
       </section>
       <section className="grid gap-5 xl:grid-cols-[1fr_340px] items-start">
-        <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md rounded-2xl overflow-hidden">
+        <Card className=" shadow-md rounded-2xl overflow-hidden">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-bold">Review session</CardTitle>
             <CardDescription>Use Space to flip, then 1-4 to rate recall quality.</CardDescription>

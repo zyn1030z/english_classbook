@@ -102,7 +102,7 @@ export function FlashcardReview({ dueCards, allCards }: { dueCards: Flashcard[];
         <select
           value={lessonFilter}
           onChange={(e) => setLessonFilter(e.target.value)}
-          className="h-9 px-3 rounded-xl border border-border/60 dark:border-white/10 bg-muted/30 dark:bg-white/5 text-xs font-semibold text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all appearance-none"
+          className="h-9 px-3 rounded-xl border border-border/60 bg-muted/30 dark:bg-white/5 text-xs font-semibold text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all appearance-none"
           style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23888\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M6 9l6 6 6-6\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center', paddingRight: '28px' }}
         >
           <option value="all">All lessons</option>
@@ -271,7 +271,7 @@ export function FlashcardReview({ dueCards, allCards }: { dueCards: Flashcard[];
             style={{ backfaceVisibility: "hidden" }}
           >
             {/* Glassmorphism background */}
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/80 to-white/40 dark:from-white/[0.06] dark:to-white/[0.02] backdrop-blur-sm border border-white/30 dark:border-white/10 shadow-2xl shadow-black/5 dark:shadow-black/30" />
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/80 to-white/40 dark:from-white/[0.06] dark:to-white/[0.02] backdrop-blur-sm border border-white/30 shadow-2xl shadow-black/5 dark:shadow-black/30" />
 
             {/* Ambient glow */}
             <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-blue-500/10 dark:bg-blue-500/5 blur-3xl" />
@@ -289,7 +289,7 @@ export function FlashcardReview({ dueCards, allCards }: { dueCards: Flashcard[];
               </p>
               <div className="mt-8 flex items-center gap-1.5 text-xs text-muted-foreground/50">
                 <span>Tap or press</span>
-                <kbd className="px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/10 text-[10px] font-mono font-bold text-foreground/70">
+                <kbd className="px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/10 border border-black/10 text-[10px] font-mono font-bold text-foreground/70">
                   Space
                 </kbd>
                 <span>to flip</span>
@@ -338,7 +338,7 @@ export function FlashcardReview({ dueCards, allCards }: { dueCards: Flashcard[];
             size="icon"
             aria-label="Pronounce"
             onClick={(e) => { e.stopPropagation(); speak(); }}
-            className="rounded-xl dark:border-white/10 h-11 w-11 hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-600 dark:hover:text-blue-400 transition-all cursor-pointer"
+            className="rounded-xl h-11 w-11 hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-600 dark:hover:text-blue-400 transition-all cursor-pointer"
           >
             <Volume2 className="h-4 w-4" />
           </Button>
@@ -347,7 +347,7 @@ export function FlashcardReview({ dueCards, allCards }: { dueCards: Flashcard[];
             size="icon"
             aria-label="Reset card"
             onClick={(e) => { e.stopPropagation(); setFlipped(false); }}
-            className="rounded-xl dark:border-white/10 h-11 w-11 hover:bg-muted/50 transition-all cursor-pointer"
+            className="rounded-xl h-11 w-11 hover:bg-muted/50 transition-all cursor-pointer"
           >
             <RotateCcw className="h-4 w-4" />
           </Button>

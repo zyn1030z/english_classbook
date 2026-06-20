@@ -88,7 +88,7 @@ export function ShadowingMode({ sentences }: { sentences: ShadowingSentence[] })
 
   return (
     <div className="space-y-5">
-      <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md rounded-2xl overflow-hidden">
+      <Card className=" shadow-md rounded-2xl overflow-hidden">
         <CardContent className="p-0">
           <div className="flex items-center justify-between px-6 py-3 border-b dark:border-white/5 bg-muted/20 dark:bg-white/[0.02]">
             <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">

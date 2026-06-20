@@ -46,7 +46,7 @@ export function StatsCards({ stats }: { stats: StatsData }) {
         return (
           <Card
             key={metric.label}
-            className="group relative overflow-hidden shadow-md dark:border-white/10 dark:bg-[#161616] hover:bg-card/90 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300"
+            className="group relative overflow-hidden shadow-md hover:bg-card/90 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300"
           >
             <div className={cn(
               "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none",

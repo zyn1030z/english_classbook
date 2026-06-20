@@ -150,7 +150,7 @@ export function GrammarNotebook({ topics, notes: allNotes }: GrammarNotebookProp
   return (
     <section className="grid gap-4 lg:grid-cols-[320px_1fr] items-start min-h-[calc(100vh-12rem)]">
       {/* Topics sidebar — grouped by lesson */}
-      <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md transition-colors flex flex-col">
+      <Card className=" shadow-md transition-colors flex flex-col">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -190,7 +190,7 @@ export function GrammarNotebook({ topics, notes: allNotes }: GrammarNotebookProp
                   </Badge>
                 </button>
                 {!isCollapsed && (
-                  <div className="ml-3 mt-0.5 space-y-0.5 border-l border-white/5 dark:border-white/10 pl-2">
+                  <div className="ml-3 mt-0.5 space-y-0.5 border-l border-white/5 pl-2">
                     {groupTopics.map(renderTopicItem)}
                   </div>
                 )}
@@ -226,7 +226,7 @@ export function GrammarNotebook({ topics, notes: allNotes }: GrammarNotebookProp
       </Card>
 
       {/* Notes panel — sticky */}
-      <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md transition-colors flex flex-col sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto">
+      <Card className=" shadow-md transition-colors flex flex-col sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto">
         <CardHeader className="pb-3">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
@@ -250,7 +250,7 @@ export function GrammarNotebook({ topics, notes: allNotes }: GrammarNotebookProp
               <Input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                className="pl-9 dark:border-white/10 dark:bg-black/20 focus-visible:ring-primary/50"
+                className="pl-9 dark:bg-black/20 focus-visible:ring-primary/50"
                 placeholder="Search notes"
               />
             </div>
@@ -260,9 +260,9 @@ export function GrammarNotebook({ topics, notes: allNotes }: GrammarNotebookProp
           {notes.map((note, i) => (
             <article
               key={note.id}
-              className="rounded-xl border dark:border-white/10 overflow-hidden transition-all hover:shadow-md"
+              className="rounded-xl border overflow-hidden transition-all hover:shadow-md"
             >
-              <div className="bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10 px-5 py-3 border-b dark:border-white/10">
+              <div className="bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10 px-5 py-3 border-b">
                 <div className="flex items-center justify-between">
                   <h2 className="font-semibold flex items-center gap-2">
                     <span className="text-primary text-xs font-mono">#{i + 1}</span>

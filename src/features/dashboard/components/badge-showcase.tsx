@@ -50,7 +50,7 @@ export function BadgeShowcase({ stats }: BadgeShowcaseProps) {
   const remaining = unlocked.length - visible.length;
 
   return (
-    <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md">
+    <Card className=" shadow-md">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">

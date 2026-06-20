@@ -157,7 +157,7 @@ export function QuizClient({
           <Button 
             size="lg" 
             variant="outline" 
-            className="rounded-2xl shadow-sm px-6 h-12 font-semibold cursor-pointer border-black/10 dark:border-white/10" 
+            className="rounded-2xl shadow-sm px-6 h-12 font-semibold cursor-pointer border-black/10" 
             onClick={() => router.push("/lessons")}
           >
             <ChevronLeft className="w-4 h-4 mr-1" /> Back
@@ -244,14 +244,14 @@ export function QuizClient({
                 labelBgClass = "bg-rose-500 text-white";
                 iconNode = <div className="w-7 h-7 rounded-full bg-rose-500 flex items-center justify-center flex-shrink-0"><X className="w-4 h-4 text-white" /></div>;
               } else {
-                containerClass = "border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] opacity-50";
+                containerClass = " dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] opacity-50";
                 labelBgClass = "bg-black/5 dark:bg-white/10 text-muted-foreground";
               }
             } else if (isSelected) {
               containerClass = "border-blue-500 bg-blue-50 dark:bg-blue-500/10 ring-2 ring-blue-500/25 shadow-md shadow-blue-500/5";
               labelBgClass = "bg-blue-500 text-white";
             } else {
-              containerClass = "border-black/10 dark:border-white/10 bg-white dark:bg-white/[0.03] hover:border-blue-400 dark:hover:border-blue-500/50 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 hover:shadow-md";
+              containerClass = "border-black/10 bg-white dark:bg-white/[0.03] hover:border-blue-400 dark:hover:border-blue-500/50 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 hover:shadow-md";
               labelBgClass = "bg-black/5 dark:bg-white/10 text-slate-600 dark:text-slate-400";
             }
 
@@ -282,7 +282,7 @@ export function QuizClient({
           ? (isCurrentCorrect 
               ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/60' 
               : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800/60') 
-          : 'bg-white dark:bg-[#0c0c14] border-black/5 dark:border-white/5 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.08)] dark:shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.3)]'
+          : 'bg-white dark:bg-[#0c0c14] dark:border-white/5 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.08)] dark:shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.3)]'
       }`}>
         <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex-1 w-full">
@@ -300,7 +300,7 @@ export function QuizClient({
                     {currentQuestion?.options?.find(o => o.isCorrect)?.text}
                   </div>
                 )}
-                <div className="flex items-start gap-3 text-sm sm:text-[15px] bg-white/60 dark:bg-black/20 backdrop-blur-sm p-4 rounded-xl border border-black/5 dark:border-white/5 shadow-sm text-foreground/80">
+                <div className="flex items-start gap-3 text-sm sm:text-[15px] bg-white/60 dark:bg-black/20 backdrop-blur-sm p-4 rounded-xl border dark:border-white/5 shadow-sm text-foreground/80">
                   <Flag className="w-5 h-5 mt-0.5 flex-shrink-0 text-blue-500" />
                   <span className="leading-relaxed">{currentQuestion?.explanation}</span>
                 </div>

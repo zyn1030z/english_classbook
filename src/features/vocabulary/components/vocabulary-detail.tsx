@@ -46,9 +46,9 @@ export function VocabularyDetail({
       />
 
       {/* Panel */}
-      <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[480px] bg-background dark:bg-[#161616] border-l dark:border-white/10 shadow-2xl animate-in slide-in-from-right-full duration-300 flex flex-col">
+      <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[480px] bg-background border-l shadow-2xl animate-in slide-in-from-right-full duration-300 flex flex-col">
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 p-6 pb-4 border-b dark:border-white/10">
+        <div className="flex items-start justify-between gap-3 p-6 pb-4 border-b">
           <div className="min-w-0">
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-bold tracking-tight truncate">{vocab.word}</h2>

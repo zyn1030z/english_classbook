@@ -12,7 +12,7 @@ export interface RecentLesson {
 
 export function RecentLessons({ lessons }: { lessons: RecentLesson[] }) {
   return (
-    <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md">
+    <Card className=" shadow-md">
       <CardHeader>
         <CardTitle>Recent lessons</CardTitle>
         <CardDescription>Your latest imported and created lessons.</CardDescription>

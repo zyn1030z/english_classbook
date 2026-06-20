@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils/cn";
 import type { Lesson } from "@/types";
 import { EditLessonSheet } from "./edit-lesson-sheet";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 export function LessonCard({ lesson, isAdmin = false, viewMode = "grid" }: { lesson: Lesson; isAdmin?: boolean; viewMode?: "grid" | "list" }) {
   const [isDeleting, startDelete] = useTransition();
@@ -167,10 +168,15 @@ export function LessonCard({ lesson, isAdmin = false, viewMode = "grid" }: { les
   if (viewMode === "list") {
     return (
       <>
-        <div className={`group relative flex flex-col sm:flex-row sm:items-center overflow-hidden transition-all duration-300 shadow-sm border rounded-xl p-3 pr-4 gap-4 ${
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileHover={{ scale: 1.01 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className={`group relative flex flex-col sm:flex-row sm:items-center overflow-hidden transition-all duration-300 shadow-sm border rounded-xl p-3 pr-4 gap-4 ${
           isGenerating
-            ? "border-primary/50 shadow-[0_0_15px_rgba(59,130,246,0.15)] bg-primary/5 dark:bg-primary/10"
-            : "border-black/5 dark:border-white/10 bg-white dark:bg-[#0f0f13] hover:-translate-y-0.5 hover:shadow-md hover:border-primary/20 dark:hover:border-primary/30"
+            ? "border-primary/50 shadow-[0_0_15px_rgba(var(--primary),0.15)] bg-primary/5 dark:bg-primary/10"
+            : " bg-white dark:bg-card hover:-translate-y-0.5 hover:shadow-md hover:border-primary/50 dark:hover:border-primary/50"
         }`}>
           {isGenerating && (
             <div className="absolute inset-0 bg-primary/10 dark:bg-primary/20 animate-pulse pointer-events-none" />
@@ -206,8 +212,8 @@ export function LessonCard({ lesson, isAdmin = false, viewMode = "grid" }: { les
                 className={cn(
                   "h-9 rounded-lg font-medium transition-all duration-300 relative z-10",
                   isGenerating
-                    ? "border-primary/50 text-primary bg-primary/10 shadow-[0_0_10px_rgba(59,130,246,0.3)]"
-                    : "border-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:border-indigo-500/40"
+                    ? "border-primary/50 text-primary bg-primary/10 shadow-[0_0_10px_rgba(var(--primary),0.3)]"
+                    : "border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/40"
                 )}
               >
                 {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin sm:mr-1.5" /> : <Wand2 className="h-3.5 w-3.5 sm:mr-1.5" />}
@@ -230,7 +236,7 @@ export function LessonCard({ lesson, isAdmin = false, viewMode = "grid" }: { les
               )}
             </div>
           </div>
-        </div>
+        </motion.div>
         <DeleteDialog />
       </>
     );
@@ -238,8 +244,15 @@ export function LessonCard({ lesson, isAdmin = false, viewMode = "grid" }: { les
 
   return (
     <>
-      <Card className="group relative flex flex-col overflow-hidden transition-all duration-300 shadow-sm border border-black/5 dark:border-white/10 bg-white dark:bg-[#0f0f13] hover:-translate-y-1 hover:shadow-xl hover:border-primary/20 dark:hover:border-primary/30 rounded-2xl">
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={{ y: -6, scale: 1.01 }}
+        transition={{ duration: 0.4, ease: [0.175, 0.885, 0.32, 1.1] }}
+        className="h-full"
+      >
+      <Card className="group relative flex flex-col h-full overflow-hidden transition-all duration-300 shadow-sm border bg-white dark:bg-card hover:shadow-xl hover:border-primary/50 rounded-2xl">
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-3">
             <div
@@ -310,7 +323,7 @@ export function LessonCard({ lesson, isAdmin = false, viewMode = "grid" }: { les
 
         {/* Generating Overlay */}
         {isGenerating && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/95 dark:bg-[#0f0f13]/95 backdrop-blur-sm rounded-2xl animate-in fade-in duration-300">
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/95/95 backdrop-blur-sm rounded-2xl animate-in fade-in duration-300">
             {/* Pulsing icon */}
             <div className="relative mb-6">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-xl shadow-blue-500/25 animate-pulse">
@@ -338,7 +351,7 @@ export function LessonCard({ lesson, isAdmin = false, viewMode = "grid" }: { les
           </div>
         )}
 
-        <CardFooter className="pt-0 pb-5 flex flex-col gap-2">
+        <CardFooter className="pt-0 pb-5 flex flex-col gap-2 mt-auto">
           <Button
             onClick={() => router.push(`/lessons/${lesson.id}`)}
             className="w-full h-11 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all duration-300 font-semibold gap-2 cursor-pointer"
@@ -350,13 +363,14 @@ export function LessonCard({ lesson, isAdmin = false, viewMode = "grid" }: { les
             onClick={(e) => { e.stopPropagation(); handleGenerateQuiz(); }}
             variant="outline"
             disabled={isGenerating || lesson.status === "draft"}
-            className="w-full h-10 rounded-xl transition-all duration-300 font-medium gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-indigo-500/20 hover:border-indigo-500/40 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+            className="w-full h-10 rounded-xl transition-all duration-300 font-medium gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-primary/20 hover:border-primary/40 hover:bg-primary/10 text-primary"
           >
             {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
             {isGenerating ? "AI is generating..." : "Generate & Play Quiz"}
           </Button>
         </CardFooter>
       </Card>
+      </motion.div>
 
         <DeleteDialog />
     </>

@@ -109,7 +109,7 @@ export function WritingLab({ prompts }: { prompts: WritingPrompt[] }) {
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Prompt Selector & Instructions */}
       {!feedback && (
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 bg-muted/20 dark:bg-white/5 p-4 rounded-2xl border dark:border-white/10">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 bg-muted/20 dark:bg-white/5 p-4 rounded-2xl border">
           <Select
             value={selectedPrompt.id}
             onValueChange={(val) => {
@@ -135,19 +135,19 @@ export function WritingLab({ prompts }: { prompts: WritingPrompt[] }) {
       {/* Analytics Dashboard */}
       {feedback && feedback.analytics && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="p-4 rounded-2xl border dark:border-white/10 bg-card shadow-sm text-center space-y-1">
+          <div className="p-4 rounded-2xl border bg-card shadow-sm text-center space-y-1">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Score</p>
             <p className="text-3xl font-black text-primary">{feedback.analytics.score}</p>
           </div>
-          <div className="p-4 rounded-2xl border dark:border-white/10 bg-card shadow-sm text-center space-y-1">
+          <div className="p-4 rounded-2xl border bg-card shadow-sm text-center space-y-1">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tone</p>
             <p className="text-xl font-bold mt-2">{feedback.analytics.tone}</p>
           </div>
-          <div className="p-4 rounded-2xl border dark:border-white/10 bg-card shadow-sm text-center space-y-1">
+          <div className="p-4 rounded-2xl border bg-card shadow-sm text-center space-y-1">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">CEFR Level</p>
             <p className="text-3xl font-black text-blue-500">{feedback.analytics.cefr_level}</p>
           </div>
-          <div className="p-4 rounded-2xl border dark:border-white/10 bg-card shadow-sm flex flex-col items-center justify-center space-y-2">
+          <div className="p-4 rounded-2xl border bg-card shadow-sm flex flex-col items-center justify-center space-y-2">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Advanced Words</p>
             <div className="flex flex-wrap justify-center gap-1">
               {feedback.analytics.advanced_words?.length > 0 ? (
@@ -163,7 +163,7 @@ export function WritingLab({ prompts }: { prompts: WritingPrompt[] }) {
       )}
 
       {/* Main Editor */}
-      <div className="rounded-2xl border dark:border-white/10 bg-card shadow-sm overflow-hidden flex flex-col transition-all">
+      <div className="rounded-2xl border bg-card shadow-sm overflow-hidden flex flex-col transition-all">
         <div className="p-4 border-b dark:border-white/5 flex items-center justify-between bg-muted/20 dark:bg-white/[0.02]">
           <div className="text-sm font-medium">Grammar Check</div>
           <div className="text-xs font-medium text-muted-foreground">{wordCount} words</div>
@@ -230,7 +230,7 @@ export function WritingLab({ prompts }: { prompts: WritingPrompt[] }) {
 
       {/* Native Version Card */}
       {feedback && feedback.native_version && (
-        <div className="rounded-2xl border dark:border-white/10 bg-emerald-500/5 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="rounded-2xl border bg-emerald-500/5 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="p-4 border-b border-emerald-500/10 flex items-center justify-between bg-emerald-500/10">
             <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400">Native Version Suggestion</div>
             <Button variant="ghost" size="sm" onClick={copyNativeVersion} className="h-8 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20">

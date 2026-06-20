@@ -122,10 +122,10 @@ export function LessonForm() {
               className="space-y-4"
             >
               <div className="grid gap-4 md:grid-cols-2">
-                <Input name="title" placeholder="Lesson title" required className="dark:border-white/10 dark:bg-black/20 focus-visible:ring-primary/50" />
-                <Input name="tags" placeholder="Tags separated by commas" className="dark:border-white/10 dark:bg-black/20 focus-visible:ring-primary/50" />
+                <Input name="title" placeholder="Lesson title" required className=" dark:bg-black/20 focus-visible:ring-primary/50" />
+                <Input name="tags" placeholder="Tags separated by commas" className=" dark:bg-black/20 focus-visible:ring-primary/50" />
               </div>
-              <Textarea name="description" placeholder="What did this lesson cover?" rows={2} className="dark:border-white/10 dark:bg-black/20 focus-visible:ring-primary/50 resize-none" />
+              <Textarea name="description" placeholder="What did this lesson cover?" rows={2} className=" dark:bg-black/20 focus-visible:ring-primary/50 resize-none" />
 
               <div className="flex flex-wrap items-end gap-4 mt-2">
                 <div className="flex-1 min-w-[200px] space-y-2">
@@ -146,7 +146,7 @@ export function LessonForm() {
                 </div>
 
                 <Select name="status" defaultValue="draft">
-                  <SelectTrigger aria-label="Lesson status" className="w-[140px] dark:border-white/10 dark:bg-black/20 focus:ring-primary/50">
+                  <SelectTrigger aria-label="Lesson status" className="w-[140px] dark:bg-black/20 focus:ring-primary/50">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>

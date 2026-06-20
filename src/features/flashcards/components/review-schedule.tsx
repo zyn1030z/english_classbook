@@ -39,7 +39,7 @@ export function ReviewSchedule({ cards }: { cards: ScheduleCard[] }) {
   ].filter((g) => g.items.length > 0);
 
   return (
-    <Card className="dark:border-white/10 dark:bg-[#161616] shadow-md">
+    <Card className=" shadow-md">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
