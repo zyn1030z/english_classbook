@@ -3,11 +3,13 @@ import { QuickActions } from "@/features/dashboard/components/quick-actions";
 import { RecentLessons } from "@/features/dashboard/components/recent-lessons";
 import { StatsCards } from "@/features/dashboard/components/stats-cards";
 import { TodayReview } from "@/features/dashboard/components/today-review";
+import { DailyQuests } from "@/features/dashboard/components/daily-quests";
 import { BadgeShowcase } from "@/features/dashboard/components/badge-showcase";
 import { WeeklyProgress } from "@/features/analytics/components/weekly-progress";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/config";
 import { calculateStreak } from "@/features/streak/actions";
+import { getAdaptiveQuests } from "@/features/dashboard/actions/quests";
 import type { StatsData } from "@/features/dashboard/components/stats-cards";
 import type { ReviewCard } from "@/features/dashboard/components/today-review";
 import type { RecentLesson } from "@/features/dashboard/components/recent-lessons";
@@ -20,6 +22,7 @@ export default async function DashboardPage() {
   let recentLessons: RecentLesson[] = [];
   let weeklyData: WeeklyPoint[] = [];
   let badgeStats = { vocabCount: 0, lessonCount: 0, quizCount: 0, bestQuizScore: 0, flashcardMastered: 0, totalReviews: 0, streakCount: 0 };
+  let questsData: any[] = [];
 
   if (hasSupabaseConfig()) {
     const supabase = await createClient();
@@ -62,6 +65,8 @@ export default async function DashboardPage() {
         totalReviews: reviewCountRes.count ?? 0,
         streakCount: streak,
       };
+
+      questsData = await getAdaptiveQuests(user.id);
 
       // Today's review cards (personal flashcards with review data)
       const { data: dueCards } = await supabase
@@ -178,6 +183,7 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
         <div className="space-y-4">
+          <DailyQuests quests={questsData} />
           <TodayReview cards={reviewCards} />
           <BadgeShowcase stats={badgeStats} />
         </div>

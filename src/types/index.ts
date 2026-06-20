@@ -101,3 +101,16 @@ export interface LearningMetric {
   trend: string;
   tone: "blue" | "green" | "amber" | "red";
 }
+
+export type QuestType = "review_flashcards" | "add_vocabulary" | "take_quiz";
+
+export interface DailyQuest {
+  id: string;
+  type: QuestType;
+  title: string;
+  description: string;
+  target: number;
+  progress: number;
+  isCompleted: boolean;
+  reward?: number;
+}
