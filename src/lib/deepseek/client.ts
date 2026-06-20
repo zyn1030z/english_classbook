@@ -149,7 +149,7 @@ const quizJsonSchema = {
     properties: {
       questions: {
         type: "array",
-        description: "List of exactly 10 multiple choice questions",
+        description: "List of exactly 30 multiple choice questions (20 vocabulary, 10 grammar)",
         items: {
           type: "object",
           properties: {

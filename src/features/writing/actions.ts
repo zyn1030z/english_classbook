@@ -1,5 +1,7 @@
 "use server";
 
+import { createClient } from "@/lib/supabase/server";
+
 export interface GrammarCorrection {
   original: string;
   replacement: string;
@@ -33,7 +35,32 @@ const WRITING_PROMPTS: WritingPrompt[] = [
 ];
 
 export async function getWritingPrompts(): Promise<{ prompts: WritingPrompt[] }> {
-  return { prompts: WRITING_PROMPTS };
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    let userPrompts: WritingPrompt[] = [];
+    if (user) {
+      const { data: lessons } = await supabase
+        .from("lessons")
+        .select("id, title, description")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (lessons) {
+        userPrompts = lessons.map(l => ({
+          id: `lesson_${l.id}`,
+          title: `[Lesson] ${l.title}`,
+          description: l.description || "Write a summary or practice the vocabulary from this lesson."
+        }));
+      }
+    }
+    
+    return { prompts: [...WRITING_PROMPTS, ...userPrompts] };
+  } catch (error) {
+    console.error("Failed to fetch custom prompts:", error);
+    return { prompts: WRITING_PROMPTS };
+  }
 }
 
 export async function checkGrammarWithAI(text: string, promptTitle: string = "Freestyle"): Promise<{ ok: boolean; data?: WritingFeedback; message?: string }> {

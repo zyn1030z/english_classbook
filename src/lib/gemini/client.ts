@@ -137,7 +137,7 @@ const quizGenerationSchema: Schema = {
   properties: {
     questions: {
       type: Type.ARRAY,
-      description: "List of exactly 10 multiple choice questions",
+      description: "List of exactly 30 multiple choice questions (20 vocabulary, 10 grammar)",
       items: {
         type: Type.OBJECT,
         properties: {
