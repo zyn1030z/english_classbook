@@ -10,7 +10,7 @@ import type { Lesson } from "@/types";
 export function LessonList({ lessons, isAdmin = false }: { lessons: Lesson[]; isAdmin?: boolean }) {
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
-  const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = React.useState<"grid" | "list">("list");
 
   const filtered = lessons.filter((l) => {
     const matchesSearch = l.title.toLowerCase().includes(search.toLowerCase()) ||
