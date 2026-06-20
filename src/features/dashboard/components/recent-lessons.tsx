@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import { BookOpen, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -24,17 +24,36 @@ export function RecentLessons({ lessons }: { lessons: RecentLesson[] }) {
             <p className="text-sm text-muted-foreground">No lessons yet. Create your first lesson!</p>
           </div>
         ) : (
-          lessons.map((lesson) => (
-            <Link key={lesson.id} href="/lessons" className="block rounded-md border dark:border-white/10 p-3 transition-colors hover:bg-muted dark:hover:bg-black/20">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-medium">{lesson.title}</p>
-                  <p className="mt-1 text-sm text-muted-foreground line-clamp-1">{lesson.description}</p>
+          <div className="flex flex-col gap-1">
+            {lessons.map((lesson) => (
+              <Link 
+                key={lesson.id} 
+                href={`/lessons/${lesson.id}`} 
+                className="group flex items-center justify-between rounded-xl border border-transparent dark:hover:border-white/5 p-3 transition-all duration-300 hover:bg-muted/50 dark:hover:bg-white/[0.02]"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground shadow-sm">
+                    <BookOpen className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm text-foreground transition-colors">{lesson.title}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1 max-w-[200px] sm:max-w-[300px]">
+                      {lesson.description || "No description provided."}
+                    </p>
+                  </div>
                 </div>
-                <Badge tone={lesson.status === "published" ? "green" : "amber"}>{lesson.status}</Badge>
-              </div>
-            </Link>
-          ))
+                <div className="flex items-center gap-3">
+                  <Badge 
+                    tone={lesson.status === "published" ? "green" : "amber"}
+                    className="hidden sm:inline-flex"
+                  >
+                    {lesson.status}
+                  </Badge>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/50 transition-all duration-300 group-hover:translate-x-1 group-hover:text-primary" />
+                </div>
+              </Link>
+            ))}
+          </div>
         )}
       </CardContent>
     </Card>

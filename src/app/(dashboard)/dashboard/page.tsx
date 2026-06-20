@@ -6,6 +6,7 @@ import { TodayReview } from "@/features/dashboard/components/today-review";
 import { DailyQuests } from "@/features/dashboard/components/daily-quests";
 import { BadgeShowcase } from "@/features/dashboard/components/badge-showcase";
 import { WeeklyProgress } from "@/features/analytics/components/weekly-progress";
+import { RetentionChart, type RetentionData } from "@/features/analytics/components/retention-chart";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/config";
 import { calculateStreak } from "@/features/streak/actions";
@@ -21,6 +22,7 @@ export default async function DashboardPage() {
   let reviewCards: ReviewCard[] = [];
   let recentLessons: RecentLesson[] = [];
   let weeklyData: WeeklyPoint[] = [];
+  let retentionData: RetentionData = { mastered: 0, learning: 0, needsReview: 0 };
   let badgeStats = { vocabCount: 0, lessonCount: 0, quizCount: 0, bestQuizScore: 0, flashcardMastered: 0, totalReviews: 0, streakCount: 0 };
   let questsData: any[] = [];
 
@@ -115,7 +117,8 @@ export default async function DashboardPage() {
 
       // Weekly activity: vocab created + reviews this week
       const weekStart = new Date();
-      weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1); // Monday
+      const currentDay = weekStart.getDay() || 7; // Convert Sunday (0) to 7
+      weekStart.setDate(weekStart.getDate() - currentDay + 1); // Monday
       weekStart.setHours(0, 0, 0, 0);
 
       const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -159,6 +162,25 @@ export default async function DashboardPage() {
         vocabulary: weekMap.get(day)?.vocabulary ?? 0,
         reviews: weekMap.get(day)?.reviews ?? 0,
       }));
+
+      // Retention Data
+      const { data: allReviews } = await supabase
+        .from("flashcard_reviews")
+        .select("interval, next_review")
+        .eq("user_id", user.id);
+        
+      if (allReviews) {
+        const now = new Date();
+        allReviews.forEach(r => {
+          if (new Date(r.next_review) <= now) {
+            retentionData.needsReview++;
+          } else if (r.interval >= 21) {
+            retentionData.mastered++;
+          } else {
+            retentionData.learning++;
+          }
+        });
+      }
     }
   }
 
@@ -173,22 +195,35 @@ export default async function DashboardPage() {
       </section>
       <StatsCards stats={stats} />
       <section className="grid gap-4 xl:grid-cols-[1fr_360px]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Weekly activity</CardTitle>
-            <CardDescription>Vocabulary added and flashcard reviews by day.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <WeeklyProgress data={weeklyData} />
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="flex flex-col">
+              <CardHeader className="pb-2">
+                <CardTitle>Weekly activity</CardTitle>
+                <CardDescription>Vocabulary added and reviews by day</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 mt-2">
+                <WeeklyProgress data={weeklyData} />
+              </CardContent>
+            </Card>
+            <Card className="flex flex-col">
+              <CardHeader className="pb-2">
+                <CardTitle>Vocabulary Retention</CardTitle>
+                <CardDescription>Your spaced repetition learning state</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 mt-2">
+                <RetentionChart data={retentionData} />
+              </CardContent>
+            </Card>
+          </div>
+          <RecentLessons lessons={recentLessons} />
+        </div>
         <div className="space-y-4">
           <DailyQuests quests={questsData} />
           <TodayReview cards={reviewCards} />
           <BadgeShowcase stats={badgeStats} />
         </div>
       </section>
-      <RecentLessons lessons={recentLessons} />
     </div>
   );
 }
