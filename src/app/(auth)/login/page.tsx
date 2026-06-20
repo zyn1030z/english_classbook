@@ -1,78 +1,85 @@
 import { AuthCard } from "@/features/auth/components/auth-card";
+import { BookOpen, Sparkles, Brain, Trophy, ChevronLeft } from "lucide-react";
+import Link from "next/link";
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
- const params = await searchParams;
+  const params = await searchParams;
 
- return (
- <main className="relative grid min-h-screen place-items-center overflow-hidden p-4">
- {/* Animated gradient background */}
- <div className="fixed inset-0 -z-10 bg-[#0a0a0f]">
- {/* Primary gradient blob */}
- <div
- className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-20 blur-[120px]"
- style={{
- background: "radial-gradient(circle, hsl(220 70% 55%) 0%, hsl(280 60% 45%) 50%, transparent 70%)",
- animation: "loginPulse 8s ease-in-out infinite",
- }}
- />
- {/* Secondary accent blob */}
- <div
- className="absolute left-[20%] top-[30%] h-[400px] w-[400px] rounded-full opacity-15 blur-[100px]"
- style={{
- background: "radial-gradient(circle, hsl(180 60% 50%) 0%, transparent 70%)",
- animation: "loginFloat 12s ease-in-out infinite",
- }}
- />
- {/* Tertiary warm blob */}
- <div
- className="absolute right-[15%] bottom-[20%] h-[350px] w-[350px] rounded-full opacity-10 blur-[90px]"
- style={{
- background: "radial-gradient(circle, hsl(30 80% 55%) 0%, transparent 70%)",
- animation: "loginFloat 10s ease-in-out 2s infinite reverse",
- }}
- />
- {/* Grid overlay */}
- <div
- className="absolute inset-0 opacity-[0.03]"
- style={{
- backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
- linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
- backgroundSize: "60px 60px",
- }}
- />
- {/* Floating particles */}
- {[...Array(6)].map((_, i) => (
- <div
- key={i}
- className="absolute rounded-full bg-white/20"
- style={{
- width: `${3 + (i % 3) * 2}px`,
- height: `${3 + (i % 3) * 2}px`,
- left: `${15 + i * 14}%`,
- top: `${20 + ((i * 17) % 60)}%`,
- animation: `loginParticle ${6 + i * 2}s ease-in-out ${i * 0.8}s infinite`,
- }}
- />
- ))}
- </div>
+  return (
+    <div className="container relative min-h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
+      
+      {/* Top right anchor - Right section */}
+      <Link
+        href="/"
+        className="absolute right-4 top-4 md:right-8 md:top-8 z-50 text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm font-medium transition-colors"
+      >
+        <ChevronLeft className="h-4 w-4" />
+        Back to website
+      </Link>
 
- <AuthCard message={params.message} />
+      {/* Left section - Branding/Marketing */}
+      <div className="relative hidden h-full flex-col bg-zinc-950 p-10 text-white lg:flex dark:border-r overflow-hidden">
+        <div className="absolute inset-0 bg-zinc-950" />
+        
+        {/* Decorative glow elements */}
+        <div className="absolute -left-[20%] -top-[10%] h-[50%] w-[50%] rounded-full bg-primary/20 blur-[120px]" />
+        <div className="absolute -bottom-[20%] -right-[10%] h-[60%] w-[60%] rounded-full bg-blue-500/10 blur-[120px]" />
+        
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 to-zinc-950/20" />
+        
+        <div className="relative z-20 flex items-center gap-2 text-lg font-bold">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+            <BookOpen className="h-5 w-5 text-primary-foreground" />
+          </div>
+          English Classbook
+        </div>
 
- <style>{`
- @keyframes loginPulse {
- 0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.2; }
- 50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.3; }
- }
- @keyframes loginFloat {
- 0%, 100% { transform: translateY(0) translateX(0); }
- 33% { transform: translateY(-30px) translateX(20px); }
- 66% { transform: translateY(20px) translateX(-15px); }
- }
- @keyframes loginParticle {
- 0%, 100% { transform: translateY(0) scale(1); opacity: 0.2; }
- 50% { transform: translateY(-40px) scale(1.5); opacity: 0.5; }
- }
- `}</style>
- </main>
- );
+        {/* Center the marketing copy */}
+        <div className="relative z-20 flex flex-1 flex-col justify-center">
+          <div className="space-y-6 max-w-[420px]">
+            <h2 className="text-3xl font-bold tracking-tight text-white">
+              Master English faster with AI-powered personalized learning.
+            </h2>
+            <div className="space-y-4 text-zinc-300">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white">
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <p>Smart flashcards that adapt to your memory</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white">
+                  <Brain className="h-4 w-4" />
+                </div>
+                <p>Interactive grammar and vocabulary practices</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white">
+                  <Trophy className="h-4 w-4" />
+                </div>
+                <p>Track your progress and build streaks</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Testimonial */}
+        <div className="relative z-20 mt-auto">
+          <blockquote className="space-y-2 border-l-2 border-primary pl-4">
+            <p className="text-lg text-zinc-300">
+              "This platform completely changed how I learn English. The AI feedback is like having a personal tutor available 24/7."
+            </p>
+            <footer className="text-sm text-zinc-400">Sofia Davis, Student</footer>
+          </blockquote>
+        </div>
+      </div>
+
+      {/* Right section - Login Form */}
+      <div className="p-4 lg:p-8 flex items-center justify-center h-full bg-background">
+        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+          <AuthCard message={params.message} />
+        </div>
+      </div>
+    </div>
+  );
 }
