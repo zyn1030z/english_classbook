@@ -191,7 +191,7 @@ export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmi
             </div>
           </div>
           
-          {lesson.status === "draft" ? (
+          {lesson.status === "draft" && (
             <div className="flex items-center gap-2 text-[13px] font-medium text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-500/10 px-3 py-2 rounded-lg">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -199,17 +199,7 @@ export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmi
               </span>
               Draft Mode (Publish to activate Quiz)
             </div>
-          ) : (
-            <div className="flex items-center gap-2 text-[13px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-2 rounded-lg">
-              <FileText className="h-4 w-4" />
-              AI Extraction ready
-            </div>
           )}
-
-          {/* View details hint */}
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-primary/0 group-hover:text-primary transition-all duration-300">
-            View details <ArrowRight className="w-3.5 h-3.5" />
-          </div>
         </CardContent>
 
         {/* Generating Overlay */}
@@ -242,11 +232,19 @@ export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmi
           </div>
         )}
 
-        <CardFooter className="pt-0 pb-5">
+        <CardFooter className="pt-0 pb-5 flex flex-col gap-2">
           <Button
-            onClick={handleGenerateQuiz}
+            onClick={() => router.push(`/lessons/${lesson.id}`)}
+            className="w-full h-11 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all duration-300 font-semibold gap-2 cursor-pointer"
+          >
+            <BookOpen className="h-4 w-4" />
+            Học Bài Này
+          </Button>
+          <Button
+            onClick={(e) => { e.stopPropagation(); handleGenerateQuiz(); }}
+            variant="outline"
             disabled={isGenerating || lesson.status === "draft"}
-            className="w-full h-11 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all duration-300 font-semibold gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-10 rounded-xl transition-all duration-300 font-medium gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-indigo-500/20 hover:border-indigo-500/40 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
           >
             {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
             {isGenerating ? "AI is generating..." : "Generate & Play Quiz"}
