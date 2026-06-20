@@ -237,3 +237,150 @@ export async function getSpeakingPrompts(): Promise<{
   return { questions };
 }
 
+// --- Shadowing Mode Data ---
+
+export interface ShadowingSentence {
+  id: string;
+  en: string;
+  vi: string;
+  difficulty: "easy" | "medium" | "hard";
+}
+
+const SHADOWING_SENTENCES: ShadowingSentence[] = [
+  { id: "s1", en: "I couldn't agree with you more.", vi: "Tôi hoàn toàn đồng ý với bạn.", difficulty: "easy" },
+  { id: "s2", en: "That's exactly how I feel about it.", vi: "Đó chính xác là những gì tôi cảm thấy.", difficulty: "easy" },
+  { id: "s3", en: "Could you please speak a little slower?", vi: "Bạn có thể nói chậm lại một chút được không?", difficulty: "easy" },
+  { id: "s4", en: "It goes without saying that health is wealth.", vi: "Không cần phải nói, sức khỏe là vàng.", difficulty: "medium" },
+  { id: "s5", en: "I'd like to point out that there are some issues with this plan.", vi: "Tôi muốn chỉ ra rằng có một số vấn đề với kế hoạch này.", difficulty: "medium" },
+  { id: "s6", en: "Let's touch base next week to discuss this further.", vi: "Hãy liên lạc lại vào tuần tới để thảo luận thêm nhé.", difficulty: "medium" },
+  { id: "s7", en: "The sheer volume of information available today is truly unprecedented.", vi: "Khối lượng thông tin khổng lồ có sẵn ngày nay thực sự là chưa từng có.", difficulty: "hard" },
+  { id: "s8", en: "It’s highly unlikely that the situation will resolve itself without intervention.", vi: "Rất khó có khả năng tình hình sẽ tự giải quyết mà không có sự can thiệp.", difficulty: "hard" }
+];
+
+export async function getShadowingSentences(): Promise<{ sentences: ShadowingSentence[] }> {
+  return { sentences: SHADOWING_SENTENCES };
+}
+
+// --- Roleplay Mode Data & AI ---
+
+export interface RoleplayScenario {
+  id: string;
+  title: string;
+  description: string;
+  systemPrompt: string;
+  firstMessage: string;
+}
+
+const ROLEPLAY_SCENARIOS: RoleplayScenario[] = [
+  {
+    id: "restaurant",
+    title: "At the Restaurant",
+    description: "Practice ordering food, asking for recommendations, and paying the bill.",
+    systemPrompt: "You are a friendly waiter at a popular Italian restaurant. Be polite, ask if the customer is ready to order, recommend the Truffle Pasta if asked, and keep your responses relatively short (1-3 sentences) suitable for spoken conversation.",
+    firstMessage: "Hello! Welcome to Bella Italia. Here is the menu. Can I get you anything to drink to start off?"
+  },
+  {
+    id: "airport",
+    title: "Airport Check-in",
+    description: "Check in for your flight, handle baggage issues, and ask for directions.",
+    systemPrompt: "You are an airline check-in agent. Be professional but helpful. Ask for passport and ticket, inform the passenger that the flight is slightly delayed, and keep your responses short.",
+    firstMessage: "Good morning! Can I see your passport and booking reference, please?"
+  },
+  {
+    id: "job-interview",
+    title: "Job Interview",
+    description: "Answer common interview questions for a software engineer role.",
+    systemPrompt: "You are a hiring manager interviewing a candidate for a software engineer position. Ask about their previous experience, how they handle challenges, and keep your questions professional and concise.",
+    firstMessage: "Hi, thanks for coming in today. Let's start with a classic: can you tell me a little bit about yourself?"
+  }
+];
+
+export async function getRoleplayScenarios(): Promise<{ scenarios: RoleplayScenario[] }> {
+  return { scenarios: ROLEPLAY_SCENARIOS };
+}
+
+export interface RoleplayMessage {
+  role: "user" | "ai";
+  content: string;
+  feedback?: string; // Grammar feedback on the user's message
+}
+
+export async function chatWithAI(
+  messages: { role: string; content: string }[],
+  scenario: RoleplayScenario
+): Promise<{ ok: boolean; responseMessage?: string; feedback?: string; message?: string }> {
+  try {
+    const aiProvider = process.env.AI_PROVIDER || "gemini";
+
+    // Build the prompt by injecting a rule to return JSON
+    // We want the AI to return its response AND a brief feedback on the user's latest grammar.
+    const systemPromptWithJSON = `
+${scenario.systemPrompt}
+
+You MUST respond with a JSON object exactly like this:
+{
+  "response": "<your conversational reply to the user>",
+  "feedback": "<optional. if the user's last message had grammar errors or sounded unnatural, give a brief 1-sentence tip. if it was good, leave it empty.>"
+}
+`;
+
+    if (aiProvider === "deepseek" && process.env.DEEPSEEK_API_KEY) {
+      const OpenAI = (await import("openai")).default;
+      const client = new OpenAI({
+        baseURL: "https://api.deepseek.com",
+        apiKey: process.env.DEEPSEEK_API_KEY,
+      });
+
+      const openAiMessages = [
+        { role: "system", content: systemPromptWithJSON },
+        ...messages.map((m) => ({ role: m.role === "ai" ? "assistant" : "user", content: m.content }))
+      ];
+
+      const response = await client.chat.completions.create({
+        model: "deepseek-v4-flash",
+        max_tokens: 1024,
+        temperature: 0.6,
+        messages: openAiMessages as any,
+      });
+
+      const content = response.choices[0]?.message?.content || "";
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("Invalid AI format");
+      
+      const parsed = JSON.parse(jsonMatch[0]);
+      return { ok: true, responseMessage: parsed.response, feedback: parsed.feedback };
+
+    } else if (aiProvider === "gemini" && process.env.GEMINI_API_KEY) {
+      const { GoogleGenAI } = await import("@google/genai");
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      
+      const formattedHistory = messages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n");
+      
+      const prompt = `
+${systemPromptWithJSON}
+
+CONVERSATION HISTORY:
+${formattedHistory}
+
+Generate your JSON response:`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.0-flash",
+        contents: prompt,
+      });
+
+      const content = response.text || "";
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("Invalid AI format");
+      
+      const parsed = JSON.parse(jsonMatch[0]);
+      return { ok: true, responseMessage: parsed.response, feedback: parsed.feedback };
+    } else {
+      return { ok: false, message: `Missing API Key for ${aiProvider}` };
+    }
+  } catch (error: any) {
+    console.error("[Roleplay] Chat error:", error);
+    return { ok: false, message: error.message || "Failed to chat with AI" };
+  }
+}
+

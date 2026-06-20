@@ -13,6 +13,7 @@ import {
   Layers,
   LayoutDashboard,
   Mic2,
+  PenTool,
   X
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
@@ -33,7 +34,8 @@ const menuGroups = [
       { href: "/vocabulary", label: "Vocabulary", icon: BookOpen },
       { href: "/flashcards", label: "Flashcards", icon: Layers },
       { href: "/grammar", label: "Grammar", icon: Brain },
-      { href: "/speaking", label: "Speaking", icon: Mic2 }
+      { href: "/speaking", label: "Speaking", icon: Mic2 },
+      { href: "/writing", label: "Writing", icon: PenTool }
     ]
   }
 ];
