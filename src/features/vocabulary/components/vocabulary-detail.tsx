@@ -4,6 +4,7 @@ import * as React from "react";
 import { BookOpen, Volume2, X, Tag, GraduationCap, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { playPronunciation } from "@/lib/utils/speech";
 import type { Difficulty, Vocabulary } from "@/types";
 
 const difficultyTone: Record<Difficulty, "green" | "amber" | "red"> = {
@@ -33,12 +34,7 @@ export function VocabularyDetail({
   if (!open || !vocab) return null;
 
   function speak(text: string) {
-    if (!("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US";
-    u.rate = 0.85;
-    window.speechSynthesis.speak(u);
+    playPronunciation(text);
   }
 
   return (

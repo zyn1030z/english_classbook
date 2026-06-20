@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, useEffect, useRef } from "react";
-import { CalendarDays, FileText, MoreVertical, Trash2, Edit2, Loader2, Rocket, Wand2, Sparkles, Brain, BookOpen, Lightbulb, ArrowRight } from "lucide-react";
+import { CalendarDays, FileText, MoreVertical, Trash2, Edit2, Loader2, Rocket, Wand2, Sparkles, Brain, BookOpen, Lightbulb, ArrowRight, GraduationCap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ import type { Lesson } from "@/types";
 import { EditLessonSheet } from "./edit-lesson-sheet";
 import { useRouter } from "next/navigation";
 
-export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmin?: boolean }) {
+export function LessonCard({ lesson, isAdmin = false, viewMode = "grid" }: { lesson: Lesson; isAdmin?: boolean; viewMode?: "grid" | "list" }) {
   const [isDeleting, startDelete] = useTransition();
   const [isGenerating, startGenerate] = useTransition();
   const [isPublishing, startPublish] = useTransition();
@@ -91,6 +91,136 @@ export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmi
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isGenerating]);
 
+  const DropdownActions = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100 data-[state=open]:opacity-100">
+          <MoreVertical className="h-4 w-4" />
+          <span className="sr-only">Open menu</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg">
+        {lesson.status === "draft" && (
+          <DropdownMenuItem 
+            onClick={(e) => {
+              e.preventDefault();
+              handlePublish();
+            }}
+            className="gap-2 cursor-pointer text-amber-600 focus:text-amber-600 focus:bg-amber-50 dark:focus:bg-amber-950/20 font-medium"
+            disabled={isPublishing}
+          >
+            {isPublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
+            {isPublishing ? "Publishing..." : "Publish Lesson"}
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem 
+          onSelect={(e) => {
+            e.preventDefault();
+            setIsEditOpen(true);
+          }}
+          className="gap-2 cursor-pointer"
+        >
+          <Edit2 className="h-4 w-4 text-muted-foreground" /> Edit lesson
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem 
+          onClick={(e) => { e.stopPropagation(); setShowDeleteAlert(true); }}
+          className="gap-2 cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
+        >
+          <Trash2 className="h-4 w-4" /> Delete lesson
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
+  const DeleteDialog = () => (
+    <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+      <AlertDialogContent className="rounded-2xl shadow-2xl sm:max-w-[400px]">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription className="text-muted-foreground">
+            This action cannot be undone. This will permanently delete the lesson
+            <span className="font-semibold text-foreground"> "{lesson.title}" </span> 
+            and remove all associated vocabulary and flashcards from our servers.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="gap-2 sm:gap-0 mt-2">
+          <AlertDialogCancel className="rounded-xl" disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={(e) => {
+              e.preventDefault();
+              handleDelete();
+            }}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
+            disabled={isDeleting}
+          >
+            {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+            {isDeleting ? "Deleting..." : "Delete"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+  if (viewMode === "list") {
+    return (
+      <>
+        <div className="group relative flex flex-col sm:flex-row sm:items-center overflow-hidden transition-all duration-300 shadow-sm border border-black/5 dark:border-white/10 bg-white dark:bg-[#0f0f13] hover:-translate-y-0.5 hover:shadow-md hover:border-primary/20 dark:hover:border-primary/30 rounded-xl p-3 pr-4 gap-4">
+          <div className="hidden sm:flex shrink-0 pl-1">
+             <ProgressRing learned={lesson.learnedCount} total={lesson.vocabularyCount} />
+          </div>
+
+          <div className="flex-1 min-w-0 cursor-pointer py-1" onClick={() => router.push(`/lessons/${lesson.id}`)}>
+             <div className="flex items-center gap-2 mb-1.5">
+               <h3 className="truncate text-base font-bold tracking-tight hover:text-primary transition-colors">{lesson.title}</h3>
+               {lesson.status === "draft" && (
+                 <Badge variant="outline" tone="amber" className="text-[10px] h-5 px-1.5 shadow-sm">Draft</Badge>
+               )}
+             </div>
+             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground font-medium">
+               <span className="flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5 opacity-70" />{new Date(lesson.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+               <span className="flex items-center gap-1.5"><BookOpen className="h-3.5 w-3.5 opacity-70" />{lesson.vocabularyCount} vocab</span>
+               <span className="flex items-center gap-1.5"><GraduationCap className="h-3.5 w-3.5 opacity-70" />{lesson.grammarCount} grammar</span>
+             </div>
+          </div>
+
+          <div className="shrink-0 flex items-center justify-between sm:justify-end gap-2 mt-2 sm:mt-0">
+            <div className="flex sm:hidden">
+              <ProgressRing learned={lesson.learnedCount} total={lesson.vocabularyCount} />
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={(e) => { e.stopPropagation(); handleGenerateQuiz(); }}
+                variant="outline"
+                size="sm"
+                disabled={isGenerating || lesson.status === "draft"}
+                className="h-9 rounded-lg font-medium border-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:border-indigo-500/40"
+              >
+                {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin sm:mr-1.5" /> : <Wand2 className="h-3.5 w-3.5 sm:mr-1.5" />}
+                <span className="hidden sm:inline">{isGenerating ? "Generating..." : "Quiz"}</span>
+              </Button>
+              <Button
+                onClick={() => router.push(`/lessons/${lesson.id}`)}
+                size="sm"
+                className="h-9 rounded-lg font-semibold"
+              >
+                Học Bài
+              </Button>
+              {isAdmin && (
+                <>
+                  <DropdownActions />
+                  <EditLessonSheet lesson={lesson} open={isEditOpen} onOpenChange={setIsEditOpen} />
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+        <DeleteDialog />
+      </>
+    );
+  }
+
   return (
     <>
       <Card className="group relative flex flex-col overflow-hidden transition-all duration-300 shadow-sm border border-black/5 dark:border-white/10 bg-white dark:bg-[#0f0f13] hover:-translate-y-1 hover:shadow-xl hover:border-primary/20 dark:hover:border-primary/30 rounded-2xl">
@@ -115,47 +245,8 @@ export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmi
               
               {isAdmin && (
               <>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100 data-[state=open]:opacity-100">
-                    <MoreVertical className="h-4 w-4" />
-                    <span className="sr-only">Open menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg">
-                  {lesson.status === "draft" && (
-                    <DropdownMenuItem 
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handlePublish();
-                      }}
-                      className="gap-2 cursor-pointer text-amber-600 focus:text-amber-600 focus:bg-amber-50 dark:focus:bg-amber-950/20 font-medium"
-                      disabled={isPublishing}
-                    >
-                      {isPublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
-                      {isPublishing ? "Publishing..." : "Publish Lesson"}
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      setIsEditOpen(true);
-                    }}
-                    className="gap-2 cursor-pointer"
-                  >
-                    <Edit2 className="h-4 w-4 text-muted-foreground" /> Edit lesson
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={() => setShowDeleteAlert(true)}
-                    className="gap-2 cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" /> Delete lesson
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <EditLessonSheet lesson={lesson} open={isEditOpen} onOpenChange={setIsEditOpen} />
+                <DropdownActions />
+                <EditLessonSheet lesson={lesson} open={isEditOpen} onOpenChange={setIsEditOpen} />
               </>
               )}
             </div>
@@ -252,32 +343,7 @@ export function LessonCard({ lesson, isAdmin = false }: { lesson: Lesson; isAdmi
         </CardFooter>
       </Card>
 
-      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-        <AlertDialogContent className="rounded-2xl shadow-2xl sm:max-w-[400px]">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
-              This action cannot be undone. This will permanently delete the lesson
-              <span className="font-semibold text-foreground"> "{lesson.title}" </span> 
-              and remove all associated vocabulary and flashcards from our servers.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2 sm:gap-0 mt-2">
-            <AlertDialogCancel className="rounded-xl" disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={(e) => {
-                e.preventDefault();
-                handleDelete();
-              }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
-              disabled={isDeleting}
-            >
-              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
-              {isDeleting ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        <DeleteDialog />
     </>
   );
 }

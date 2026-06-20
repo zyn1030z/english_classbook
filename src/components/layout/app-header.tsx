@@ -37,6 +37,8 @@ export function AppHeader() {
   } | null>(null);
   const profileRef = React.useRef<HTMLDivElement>(null);
   const isDark = mounted && resolvedTheme === "dark";
+  const [uuidLabels, setUuidLabels] = React.useState<Record<string, string>>({});
+  const segments = pathname.split("/").filter(Boolean);
 
   React.useEffect(() => {
     setMounted(true);
@@ -79,11 +81,47 @@ export function AppHeader() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Fetch titles for UUIDs in the breadcrumb
+  React.useEffect(() => {
+    const fetchLabels = async () => {
+      if (!hasSupabaseConfig()) return;
+      const supabase = createClient();
+      const newLabels = { ...uuidLabels };
+      let changed = false;
+
+      for (let i = 0; i < segments.length; i++) {
+        const segment = segments[i];
+        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment)) {
+          if (!newLabels[segment]) {
+            const prevSegment = segments[i - 1];
+            if (prevSegment === "lessons") {
+              const { data } = await supabase.from("lessons").select("title").eq("id", segment).single();
+              if (data?.title) {
+                newLabels[segment] = data.title;
+                changed = true;
+              }
+            }
+          }
+        }
+      }
+      if (changed) {
+        setUuidLabels(newLabels);
+      }
+    };
+    fetchLabels();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
   // Generate breadcrumbs based on pathname
-  const segments = pathname.split("/").filter(Boolean);
   const breadcrumbs = segments.map((segment) => {
-    const label = routeMap[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
-    return { label, href: `/${segment}` };
+    let label = routeMap[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment)) {
+      label = uuidLabels[segment] || "Chi tiết";
+    }
+    // We need to construct the absolute href up to this segment
+    const segmentIndex = segments.indexOf(segment);
+    const href = "/" + segments.slice(0, segmentIndex + 1).join("/");
+    return { label, href };
   });
 
   // Initials for avatar
@@ -113,17 +151,23 @@ export function AppHeader() {
           <Link href="/dashboard" className="transition-colors hover:text-foreground">
             Home
           </Link>
-          {breadcrumbs.map((crumb, idx) => (
-            <React.Fragment key={crumb.href}>
-              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50" />
-              <span className={cn(
-                "transition-colors",
-                idx === breadcrumbs.length - 1 ? "text-foreground font-semibold" : "hover:text-foreground"
-              )}>
-                {crumb.label}
-              </span>
-            </React.Fragment>
-          ))}
+          {breadcrumbs.map((crumb, idx) => {
+            const isLast = idx === breadcrumbs.length - 1;
+            return (
+              <React.Fragment key={crumb.href}>
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50" />
+                {isLast ? (
+                  <span className="text-foreground font-semibold">
+                    {crumb.label}
+                  </span>
+                ) : (
+                  <Link href={crumb.href} className="transition-colors hover:text-foreground">
+                    {crumb.label}
+                  </Link>
+                )}
+              </React.Fragment>
+            );
+          })}
         </nav>
       </div>
 

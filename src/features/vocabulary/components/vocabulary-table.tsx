@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { VocabularyDetail } from "@/features/vocabulary/components/vocabulary-detail";
+import { playPronunciation } from "@/lib/utils/speech";
 import type { Difficulty, Vocabulary } from "@/types";
 
 const difficultyTone: Record<Difficulty, "green" | "amber" | "red"> = {
@@ -59,9 +60,7 @@ export function VocabularyTable({
   }, [query, difficulty, selectedLessonId]);
 
   function speak(word: string) {
-    if (!("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(new SpeechSynthesisUtterance(word));
+    playPronunciation(word);
   }
 
   return (

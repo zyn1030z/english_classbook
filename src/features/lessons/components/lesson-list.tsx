@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { BookOpen, GraduationCap, Search } from "lucide-react";
+import { BookOpen, GraduationCap, Search, LayoutGrid, List } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { LessonCard } from "@/features/lessons/components/lesson-card";
@@ -10,6 +10,7 @@ import type { Lesson } from "@/types";
 export function LessonList({ lessons, isAdmin = false }: { lessons: Lesson[]; isAdmin?: boolean }) {
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
+  const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
 
   const filtered = lessons.filter((l) => {
     const matchesSearch = l.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -55,15 +56,35 @@ export function LessonList({ lessons, isAdmin = false }: { lessons: Lesson[]; is
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search lessons..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-10 dark:border-white/10 dark:bg-black/20 focus-visible:ring-primary/50"
-        />
+      {/* Search and View Toggle */}
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search lessons..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10 dark:border-white/10 dark:bg-black/20 focus-visible:ring-primary/50"
+          />
+        </div>
+        <div className="flex items-center rounded-lg border bg-background p-1 shadow-sm">
+          <button
+            onClick={() => setViewMode("grid")}
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+              viewMode === "grid" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setViewMode("list")}
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+              viewMode === "list" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <List className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {/* Grid */}
@@ -76,9 +97,9 @@ export function LessonList({ lessons, isAdmin = false }: { lessons: Lesson[]; is
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className={viewMode === "grid" ? "grid gap-4 md:grid-cols-2 xl:grid-cols-3" : "flex flex-col gap-3"}>
           {filtered.map((lesson) => (
-            <LessonCard key={lesson.id} lesson={lesson} isAdmin={isAdmin} />
+            <LessonCard key={lesson.id} lesson={lesson} isAdmin={isAdmin} viewMode={viewMode} />
           ))}
         </div>
       )}

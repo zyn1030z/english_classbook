@@ -7,13 +7,14 @@ import { Button } from "@/components/ui/button";
 import { calculateNextReview } from "@/features/flashcards/sm2";
 import { submitFlashcardReview } from "@/features/flashcards/actions";
 import { hasSupabaseConfig } from "@/lib/supabase/config";
+import { playPronunciation } from "@/lib/utils/speech";
 import type { Flashcard } from "@/types";
 
 const ratings = [
-  { key: "1", label: "Again", quality: 1, className: "bg-gradient-to-b from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 text-white shadow-lg shadow-red-500/25", icon: "🔁" },
-  { key: "2", label: "Hard", quality: 3, className: "bg-gradient-to-b from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white shadow-lg shadow-orange-500/25", icon: "💪" },
-  { key: "3", label: "Good", quality: 4, className: "bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-white shadow-lg shadow-blue-500/25", icon: "👍" },
-  { key: "4", label: "Easy", quality: 5, className: "bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white shadow-lg shadow-emerald-500/25", icon: "⚡" },
+  { key: "1", label: "Again", quality: 1, className: "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 border border-red-500/20", icon: "🔁" },
+  { key: "2", label: "Hard", quality: 3, className: "bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-500/20 border border-orange-500/20", icon: "💪" },
+  { key: "3", label: "Good", quality: 4, className: "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 border border-blue-500/20", icon: "👍" },
+  { key: "4", label: "Easy", quality: 5, className: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 border border-emerald-500/20", icon: "⚡" },
 ];
 
 type StudyMode = "due" | "all";
@@ -201,13 +202,22 @@ export function FlashcardReview({ dueCards, allCards }: { dueCards: Flashcard[];
     }, 150);
   }
 
+  function skipCard() {
+    if (!card || isAnimating) return;
+    setIsAnimating(true);
+    
+    // Just move to the next card without recording a review
+    setTimeout(() => {
+      setFlipped(false);
+      setCompleted((c) => c + 1);
+      setIndex((value) => value + 1);
+      setIsAnimating(false);
+    }, 150);
+  }
+
   function speak() {
-    if (!card || !("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(card.front);
-    u.lang = "en-US";
-    u.rate = 0.85;
-    window.speechSynthesis.speak(u);
+    if (!card) return;
+    playPronunciation(card.front);
   }
 
   const progressPercent = total > 0 ? (completed / total) * 100 : 0;
@@ -234,9 +244,9 @@ export function FlashcardReview({ dueCards, allCards }: { dueCards: Flashcard[];
           </div>
           <span className="font-bold text-foreground">{Math.round(progressPercent)}%</span>
         </div>
-        <div className="h-2.5 w-full rounded-full bg-secondary/60 dark:bg-white/[0.04] overflow-hidden ring-1 ring-inset ring-black/5 dark:ring-white/5">
+        <div className="h-3.5 w-full rounded-full bg-secondary/60 dark:bg-white/[0.04] overflow-hidden ring-1 ring-inset ring-black/5 dark:ring-white/5 shadow-inner">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-500 transition-all duration-700 ease-out"
+            className="h-full rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-500 transition-all duration-700 ease-out shadow-[0_0_10px_rgba(59,130,246,0.5)]"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -274,7 +284,7 @@ export function FlashcardReview({ dueCards, allCards }: { dueCards: Flashcard[];
                   Front side
                 </span>
               </div>
-              <p className="text-3xl sm:text-4xl font-extrabold leading-tight tracking-tight text-foreground">
+              <p className="text-5xl sm:text-7xl font-extrabold leading-tight tracking-tight text-foreground drop-shadow-md transition-all">
                 {card!.front}
               </p>
               <div className="mt-8 flex items-center gap-1.5 text-xs text-muted-foreground/50">
@@ -306,7 +316,7 @@ export function FlashcardReview({ dueCards, allCards }: { dueCards: Flashcard[];
                   Back side
                 </span>
               </div>
-              <p className="text-2xl sm:text-3xl font-extrabold leading-relaxed tracking-tight text-emerald-700 dark:text-emerald-300 whitespace-pre-line">
+              <p className="text-3xl sm:text-5xl font-extrabold leading-relaxed tracking-tight text-emerald-700 dark:text-emerald-300 whitespace-pre-line drop-shadow-sm transition-all">
                 {card!.back}
               </p>
               {schedule && (
@@ -342,19 +352,37 @@ export function FlashcardReview({ dueCards, allCards }: { dueCards: Flashcard[];
             <RotateCcw className="h-4 w-4" />
           </Button>
         </div>
-        <div className="flex-1 grid grid-cols-4 gap-2">
-          {ratings.map((r) => (
+        {flipped ? (
+          <div className="flex-1 grid grid-cols-4 gap-2 animate-in slide-in-from-bottom-2 fade-in duration-300">
+            {ratings.map((r) => (
+              <Button
+                key={r.key}
+                className={`${r.className} rounded-xl font-bold transition-all duration-200 hover:shadow-md active:scale-95 h-11 cursor-pointer`}
+                onClick={() => review(r.quality as 1 | 3 | 4 | 5)}
+                disabled={isAnimating}
+              >
+                <kbd className="hidden sm:inline mr-1.5 text-[10px] font-mono opacity-60 border border-current/20 px-1.5 py-0.5 rounded text-current">{r.key}</kbd>
+                {r.label}
+              </Button>
+            ))}
+          </div>
+        ) : (
+          <div className="flex-1 flex gap-2 animate-in fade-in duration-300">
             <Button
-              key={r.key}
-              className={`${r.className} rounded-xl font-bold transition-all duration-200 hover:shadow-xl active:scale-95 h-11 cursor-pointer`}
-              onClick={() => review(r.quality as 1 | 3 | 4 | 5)}
-              disabled={isAnimating}
+              variant="outline"
+              className="flex-1 h-11 rounded-xl font-bold shadow-sm text-sm cursor-pointer hover:bg-muted/50 transition-all text-muted-foreground"
+              onClick={(e) => { e.stopPropagation(); skipCard(); }}
             >
-              <kbd className="hidden sm:inline mr-1.5 text-[10px] font-mono opacity-60 bg-white/20 px-1.5 py-0.5 rounded">{r.key}</kbd>
-              {r.label}
+              Skip
             </Button>
-          ))}
-        </div>
+            <Button
+              className="flex-[3] h-11 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-sm text-base cursor-pointer tracking-wide transition-all"
+              onClick={(e) => { e.stopPropagation(); setFlipped(true); }}
+            >
+              Show Answer
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

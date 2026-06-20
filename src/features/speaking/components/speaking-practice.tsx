@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMediaRecorder } from "@/hooks/use-media-recorder";
 import { evaluateSpeaking, getSpeakingPrompts } from "@/features/speaking/actions";
 import type { SpeakingFeedback, SpeakingQuestion } from "@/features/speaking/actions";
+import { playPronunciation } from "@/lib/utils/speech";
 
 // SpeakingQuestion type imported from actions
 
@@ -137,12 +138,7 @@ export function SpeakingPractice({ questions: initialQuestions }: { questions: S
   };
 
   function speak(text: string) {
-    if (!("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US";
-    u.rate = 0.85;
-    window.speechSynthesis.speak(u);
+    playPronunciation(text);
   }
 
   const question = questions[current];

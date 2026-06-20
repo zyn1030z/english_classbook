@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { generateLessonQuiz, toggleVocabLearned } from "@/features/lessons/actions";
+import { playPronunciation } from "@/lib/utils/speech";
 
 type VocabItem = {
   id: string;
@@ -291,12 +292,7 @@ export function LessonDetailClient({ lesson, vocabularies, grammarNotes, lessonF
                         <p className="font-semibold text-sm text-foreground truncate">{v.word}</p>
                         <button
                           type="button"
-                          onClick={() => {
-                            const utterance = new SpeechSynthesisUtterance(v.word);
-                            utterance.lang = "en-US";
-                            utterance.rate = 0.85;
-                            speechSynthesis.speak(utterance);
-                          }}
+                          onClick={() => playPronunciation(v.word)}
                           className="flex-shrink-0 p-0.5 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
                           title="Pronounce"
                         >
