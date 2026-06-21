@@ -20,10 +20,10 @@ export default function DashboardLoading() {
       {/* Stats Cards */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i} className="dark:border-white/10 dark:bg-[#161616] shadow-sm">
+          <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="h-6 w-6 rounded-md" />
+              <Skeleton className="h-4 w-4" />
             </CardHeader>
             <CardContent>
               <Skeleton className="h-8 w-16 mb-2 mt-1" />
@@ -40,18 +40,18 @@ export default function DashboardLoading() {
           {/* Charts */}
           <div className="grid gap-4 md:grid-cols-2">
             {/* Weekly Progress Skeleton */}
-            <Card className="dark:border-white/10 dark:bg-[#161616] flex flex-col h-full shadow-sm">
+            <Card className="flex flex-col h-full">
               <CardHeader className="pb-2">
                 <Skeleton className="h-5 w-32 mb-1.5" />
                 <Skeleton className="h-3 w-48" />
               </CardHeader>
               <CardContent className="flex-1 mt-2">
-                <Skeleton className="h-64 w-full rounded-xl opacity-50" />
+                <Skeleton className="h-64 w-full opacity-50" />
               </CardContent>
             </Card>
 
             {/* Retention Chart Skeleton */}
-            <Card className="dark:border-white/10 dark:bg-[#161616] flex flex-col h-full shadow-sm">
+            <Card className="flex flex-col h-full">
               <CardHeader className="pb-2">
                 <Skeleton className="h-5 w-40 mb-1.5" />
                 <Skeleton className="h-3 w-56" />
@@ -63,7 +63,7 @@ export default function DashboardLoading() {
           </div>
 
           {/* Recent Lessons Skeleton */}
-          <Card className="dark:border-white/10 dark:bg-[#161616] shadow-sm">
+          <Card>
             <CardHeader>
               <Skeleton className="h-5 w-32 mb-1.5" />
               <Skeleton className="h-3 w-64" />
@@ -79,7 +79,7 @@ export default function DashboardLoading() {
         {/* Right Column (Sidebar Widgets) */}
         <div className="space-y-4">
           {/* Daily Quests Skeleton */}
-          <Card className="dark:border-white/10 dark:bg-[#161616] shadow-sm">
+          <Card>
              <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <Skeleton className="h-5 w-32" />
                 <Skeleton className="h-5 w-8 rounded-full" />
@@ -103,7 +103,7 @@ export default function DashboardLoading() {
           </Card>
 
           {/* Today Review Skeleton */}
-          <Card className="dark:border-white/10 dark:bg-[#161616] shadow-sm">
+          <Card>
              <CardHeader>
                 <Skeleton className="h-5 w-32 mb-1.5" />
                 <Skeleton className="h-3 w-48" />

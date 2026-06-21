@@ -50,13 +50,11 @@ export function BadgeShowcase({ stats }: BadgeShowcaseProps) {
  const remaining = unlocked.length - visible.length;
 
  return (
- <Card className=" shadow-md">
+ <Card>
  <CardHeader className="pb-3">
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-2.5">
- <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500">
- <Trophy className="h-4 w-4" />
- </div>
+ <Trophy className="h-5 w-5 text-muted-foreground" />
  <div>
  <CardTitle className="text-sm font-bold">Achievements</CardTitle>
  <p className="text-[11px] text-muted-foreground font-medium">{unlocked.length} / {total} unlocked</p>
@@ -70,9 +68,9 @@ export function BadgeShowcase({ stats }: BadgeShowcaseProps) {
  </Link>
  </div>
  {/* Progress bar */}
- <div className="h-1.5 w-full rounded-full bg-secondary/60 dark:bg-white/[0.04] overflow-hidden mt-2">
+ <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden mt-2">
  <div
- className="h-full rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 transition-all duration-700"
+ className="h-full rounded-full bg-primary transition-all duration-700"
  style={{ width: `${(unlocked.length / total) * 100}%` }}
  />
  </div>
@@ -89,7 +87,7 @@ export function BadgeShowcase({ stats }: BadgeShowcaseProps) {
  return (
  <div
  key={badge.id}
- className="group flex flex-col items-center gap-1.5 py-2 rounded-xl hover:bg-muted/30 dark:hover:bg-white/[0.03] transition-colors cursor-default"
+ className="group flex flex-col items-center gap-1.5 py-2 rounded-xl hover:bg-muted/50 transition-colors cursor-default"
  title={badge.title}
  >
  <div className={`h-9 w-9 rounded-xl ${badge.bgColor} ring-1 ${badge.ringColor} flex items-center justify-center transition-transform group-hover:scale-110`}>
@@ -104,9 +102,9 @@ export function BadgeShowcase({ stats }: BadgeShowcaseProps) {
  {remaining > 0 && (
  <Link
  href="/profile"
- className="flex flex-col items-center justify-center gap-1.5 py-2 rounded-xl hover:bg-muted/30 dark:hover:bg-white/[0.03] transition-colors cursor-pointer"
+ className="flex flex-col items-center justify-center gap-1.5 py-2 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer"
  >
- <div className="h-9 w-9 rounded-xl bg-muted/50 dark:bg-white/5 ring-1 ring-border/30 flex items-center justify-center">
+ <div className="h-9 w-9 rounded-xl bg-muted/50 ring-1 ring-border flex items-center justify-center">
  <span className="text-xs font-bold text-muted-foreground">+{remaining}</span>
  </div>
  <span className="text-[10px] font-semibold text-muted-foreground">More</span>

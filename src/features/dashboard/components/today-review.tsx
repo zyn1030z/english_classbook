@@ -11,7 +11,7 @@ export interface ReviewCard {
 
 export function TodayReview({ cards }: { cards: ReviewCard[] }) {
  return (
- <Card className=" shadow-md">
+ <Card>
  <CardHeader>
  <CardTitle>Today&apos;s review</CardTitle>
  <CardDescription>{cards.length} cards are ready for spaced repetition.</CardDescription>
@@ -25,7 +25,7 @@ export function TodayReview({ cards }: { cards: ReviewCard[] }) {
  ) : (
  <div className="space-y-3">
  {cards.slice(0, 5).map((card) => (
- <div key={card.id} className="flex items-center justify-between rounded-md border dark:bg-black/20 p-3">
+ <div key={card.id} className="flex items-center justify-between rounded-md border p-3">
  <div>
  <p className="font-medium">{card.front}</p>
  <p className="text-sm text-muted-foreground">Interval {card.interval} days</p>

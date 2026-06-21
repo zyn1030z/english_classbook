@@ -11,22 +11,10 @@ export interface StatsData {
 }
 
 const colorConfigs = [
- {
- iconClass: "text-amber-500 bg-amber-500/10 border-amber-500/20",
- bgAccent: "from-amber-500/5 to-transparent"
- },
- {
- iconClass: "text-blue-500 bg-blue-500/10 border-blue-500/20",
- bgAccent: "from-blue-500/5 to-transparent"
- },
- {
- iconClass: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
- bgAccent: "from-emerald-500/5 to-transparent"
- },
- {
- iconClass: "text-rose-500 bg-rose-500/10 border-rose-500/20",
- bgAccent: "from-rose-500/5 to-transparent"
- }
+  { iconClass: "text-muted-foreground" },
+  { iconClass: "text-muted-foreground" },
+  { iconClass: "text-muted-foreground" },
+  { iconClass: "text-muted-foreground" }
 ];
 
 export function StatsCards({ stats }: { stats: StatsData }) {
@@ -41,36 +29,25 @@ export function StatsCards({ stats }: { stats: StatsData }) {
  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
  {metrics.map((metric, index) => {
  const Icon = metric.icon;
- const colors = colorConfigs[index] ?? colorConfigs[0];
 
  return (
- <Card
- key={metric.label}
- className="group relative overflow-hidden dark:bg-[#161616] dark:border-white/10 shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 hover:border-primary/30 transition-all duration-300 ease-out"
- >
- <div className={cn(
- "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none",
- colors.bgAccent
- )} />
- <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2.5">
- <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
- {metric.label}
- </CardTitle>
- <div className={cn(
- "flex h-8 w-8 items-center justify-center rounded-lg border transition-transform duration-300 group-hover:scale-105",
- colors.iconClass
- )}>
- <Icon className="h-4.5 w-4.5" />
- </div>
- </CardHeader>
- <CardContent className="relative">
- <div className="text-2xl font-bold tracking-tight text-foreground">
- {metric.value}
- </div>
- <Badge className="mt-2 text-[10px] font-medium" tone="green">
- {metric.trend}
- </Badge>
- </CardContent>
+  <Card
+  key={metric.label}
+  >
+  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+  <CardTitle className="text-sm font-medium">
+  {metric.label}
+  </CardTitle>
+  <Icon className="h-4 w-4 text-muted-foreground" />
+  </CardHeader>
+  <CardContent>
+  <div className="text-2xl font-bold">
+  {metric.value}
+  </div>
+  <p className="text-xs text-muted-foreground mt-1">
+  {metric.trend}
+  </p>
+  </CardContent>
  </Card>
  );
  })}
